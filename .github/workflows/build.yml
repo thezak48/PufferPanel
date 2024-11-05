@@ -118,8 +118,8 @@ jobs:
 
       - name: Set CurseForge Key
         env:
-          secret_set: ${{ secrets.CURSEFORGE_CODE != '' }}
-        if: ${{ env.secret_set }}
+          secret_set: ${{ secrets.CURSEFORGE_CODE }}
+        if: ${{ env.secret_set != '' }}
         run: |
           echo '${{ secrets.CURSEFORGE_CODE }}' > config/curseforge.go
 
