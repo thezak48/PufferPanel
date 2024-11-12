@@ -18,6 +18,7 @@ const events = inject('events')
 const username = ref('')
 const email = ref('')
 const password = ref('')
+const otpActive = ref('')
 
 const usernameError = ref('')
 const emailError = ref('')
@@ -104,7 +105,10 @@ onMounted(async () => {
   const user = await api.user.get(route.params.id)
   username.value = user.username
   email.value = user.email
-  permissions.value = await api.user.getPermissions(route.params.id)
+  if (api.auth.hasScope('users.perms.view')) {
+    permissions.value = await api.user.getPermissions(route.params.id)
+  }
+  otpActive.value = user.otpActive !== undefined ? user.otpActive : false
 })
 
 function scopeLabel(scope) {
@@ -176,6 +180,9 @@ function togglePermission(scope) {
           :error="passwordError"
           @blur="passwordError = (validate.password(password) || password.length === 0) ? '' : t('error.PasswordInvalid')"
         />
+        <div v-if="$api.auth.hasScope('users.perms.view')">
+          <h2>{{ t('users.OtpEnabled') }}: {{ otpActive ? t('common.Yes') : t('common.No') }}</h2>
+        </div>
         <btn v-if="$api.auth.hasScope('users.info.edit')" color="primary" :disabled="!canSubmitDetails()" @click="submitDetails()"><icon name="save" />{{ t('users.UpdateDetails') }}</btn>
         <btn v-if="$api.auth.hasScope('users.info.edit')" color="error" @click="deleteUser()"><icon name="remove" />{{ t('users.Delete') }}</btn>
       </form>
