@@ -17,6 +17,7 @@ import (
 var downloader sync.Mutex
 
 const SteamMetadataServerLink = "https://media.steampowered.com/client/"
+const DownloadBaseUrl = "https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_2.7.4/"
 
 func init() {
 }
@@ -142,7 +143,7 @@ func downloadBinaries(rootBinaryFolder string) error {
 		return nil
 	}
 
-	link := DepotDownloaderLink
+	link := DownloadBaseUrl + AssetName
 	arch := "x64"
 	if runtime.GOOS == "arm64" {
 		arch = "arm64"
