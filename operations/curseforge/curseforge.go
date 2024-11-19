@@ -3,6 +3,7 @@ package curseforge
 import (
 	"errors"
 	"github.com/pufferpanel/pufferpanel/v3"
+	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
 	"io"
 	"net/http"
@@ -43,13 +44,6 @@ type CurseForge struct {
 
 var installerRegex = regexp.MustCompile("(neo)?forge-.*-installer.jar")
 var errNoFile = errors.New("status code 404")
-
-var FabricInstallerUrl = "https://maven.fabricmc.net/net/fabricmc/fabric-installer/${installerVersion}/fabric-installer-${installerVersion}.jar"
-var ImprovedFabricInstallerUrl = "https://meta.fabricmc.net/v2/versions/loader/${mcVersion}/${version}/${installerVersion}/server/jar"
-var ForgeInstallerUrl = "https://maven.minecraftforge.net/net/minecraftforge/forge/${mcVersion}-${version}/forge-${mcVersion}-${version}-installer.jar"
-var ForgeInstallerName = "forge-${mcVersion}-${version}-installer.jar"
-var NeoforgeInstallerUrl = "https://maven.minecraftforge.net/net/minecraftforge/forge/${mcVersion}-${version}/forge-${mcVersion}-${version}-installer.jar"
-var NeoforgeInstallerName = "neoforge-${version}-installer.jar"
 
 func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationResult {
 	env := args.Environment
@@ -215,9 +209,27 @@ func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationR
 				env.DisplayToConsole(true, "Cannot locate Neoforge installer")
 				return pufferpanel.OperationResult{Error: nil}
 			}
-			err = installViaJar(env, jarFile, c.JavaBinary)
+			//err = installViaJar(env, jarFile, c.JavaBinary)
 			if err != nil {
 				return pufferpanel.OperationResult{Error: err}
+			}
+
+			//now also grab the server wrapper, because screw the madness
+			env.DisplayToConsole(true, "Grabbing ServerStarter")
+			runJarFile := filepath.Join(env.GetRootDirectory(), "server.jar")
+			if _, err = os.Stat(runJarFile); os.IsNotExist(err) {
+				var cachePath = filepath.Join(config.CacheFolder.Value(), "github.com", "neoforge", "serverstarter", NeoForgeServerStarterVersion, "server.jar")
+				if _, err = os.Stat(cachePath); os.IsNotExist(err) {
+					env.DisplayToConsole(true, "Downloading "+NeoForgeServerStarter)
+					err = pufferpanel.DownloadFileToCache(NeoForgeServerStarter, cachePath)
+					if err != nil {
+						return pufferpanel.OperationResult{Error: err}
+					}
+				}
+				err = pufferpanel.CopyFile(cachePath, runJarFile)
+				if err != nil {
+					return pufferpanel.OperationResult{Error: err}
+				}
 			}
 		}
 	default:
