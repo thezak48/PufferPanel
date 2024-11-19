@@ -37,17 +37,19 @@ type CurseForge struct {
 //-   run installer in cache
 //-   copy directory to server
 //- neoforge
-//-   not dealing with for now
+//-   same as forge, but screw downloading
 //- quilt
 //-   will not deal with
 
-var forgeInstallerRegex = regexp.MustCompile("forge-.*-installer.jar")
+var installerRegex = regexp.MustCompile("(neo)?forge-.*-installer.jar")
 var errNoFile = errors.New("status code 404")
 
 var FabricInstallerUrl = "https://maven.fabricmc.net/net/fabricmc/fabric-installer/${installerVersion}/fabric-installer-${installerVersion}.jar"
 var ImprovedFabricInstallerUrl = "https://meta.fabricmc.net/v2/versions/loader/${mcVersion}/${version}/${installerVersion}/server/jar"
 var ForgeInstallerUrl = "https://maven.minecraftforge.net/net/minecraftforge/forge/${mcVersion}-${version}/forge-${mcVersion}-${version}-installer.jar"
 var ForgeInstallerName = "forge-${mcVersion}-${version}-installer.jar"
+var NeoforgeInstallerUrl = "https://maven.minecraftforge.net/net/minecraftforge/forge/${mcVersion}-${version}/forge-${mcVersion}-${version}-installer.jar"
+var NeoforgeInstallerName = "neoforge-${version}-installer.jar"
 
 func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationResult {
 	env := args.Environment
@@ -114,8 +116,8 @@ func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationR
 	}
 
 	if clientFile.Id != 0 {
-		logging.Debug.Printf("Downloading client modpack from %s\n", serverFile.DownloadUrl)
-		env.DisplayToConsole(true, "Downloading client modpack from %s", serverFile.DownloadUrl)
+		logging.Debug.Printf("Downloading modpack from %s\n", serverFile.DownloadUrl)
+		env.DisplayToConsole(true, "Downloading modpack from %s", serverFile.DownloadUrl)
 		err = downloadModpack(clientFile)
 		if err != nil {
 			return pufferpanel.OperationResult{Error: err}
@@ -140,8 +142,12 @@ func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationR
 	var jar string
 	var vars map[string]string
 	var manifest Manifest
-	if jar, err = findForgeInstallerJar(env); err == nil {
-		modLoader = "forge"
+	if jar, err = findInstallerJar(env); err == nil {
+		if strings.HasPrefix(jar, "neoforge") {
+			modLoader = "neoforge"
+		} else {
+			modLoader = "forge"
+		}
 		data["jar"] = jar
 	} else if vars, err = readVariableFile(serverFile); err == nil {
 		modLoader = strings.ToLower(vars["MODLOADER"])
@@ -189,7 +195,7 @@ func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationR
 				}
 				jarFile = forgeInstaller
 			}
-			err = installForgeViaJar(env, jarFile, c.JavaBinary)
+			err = installViaJar(env, jarFile, c.JavaBinary)
 			if err != nil {
 				return pufferpanel.OperationResult{Error: err}
 			}
@@ -197,6 +203,19 @@ func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationR
 	case "fabric":
 		{
 			err = installFabric(env, data, c.JavaBinary)
+			if err != nil {
+				return pufferpanel.OperationResult{Error: err}
+			}
+		}
+	case "neoforge":
+		{
+			//for neoforge, we need a jar
+			jarFile := data["jar"]
+			if jarFile == "" {
+				env.DisplayToConsole(true, "Cannot locate Neoforge installer")
+				return pufferpanel.OperationResult{Error: nil}
+			}
+			err = installViaJar(env, jarFile, c.JavaBinary)
 			if err != nil {
 				return pufferpanel.OperationResult{Error: err}
 			}
@@ -213,7 +232,7 @@ func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationR
 	return pufferpanel.OperationResult{Error: nil}
 }
 
-func findForgeInstallerJar(env pufferpanel.Environment) (string, error) {
+func findInstallerJar(env pufferpanel.Environment) (string, error) {
 	entries, err := os.ReadDir(env.GetRootDirectory())
 	if err != nil {
 		return "", err
@@ -223,15 +242,15 @@ func findForgeInstallerJar(env pufferpanel.Environment) (string, error) {
 		if v.IsDir() {
 			continue
 		}
-		if forgeInstallerRegex.MatchString(v.Name()) {
+		if installerRegex.MatchString(v.Name()) {
 			return v.Name(), nil
 		}
 	}
 	return "", os.ErrNotExist
 }
 
-func installForgeViaJar(env pufferpanel.Environment, jarFile string, javaBinary string) error {
-	//forge installer found, we will run this one
+func installViaJar(env pufferpanel.Environment, jarFile string, javaBinary string) error {
+	//installer found, we will run this one
 	result := make(chan int, 1)
 	err := env.Execute(pufferpanel.ExecutionData{
 		Command:   javaBinary,
@@ -245,7 +264,7 @@ func installForgeViaJar(env pufferpanel.Environment, jarFile string, javaBinary 
 		return err
 	}
 	if <-result != 0 {
-		return errors.New("failed to run forge installer")
+		return errors.New("failed to run installer")
 	}
 
 	//delete installer now

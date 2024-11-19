@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const PathSeparator = string(os.PathSeparator)
+const PathSeparator = "/"
 
 type ExtractOptions struct {
 	FileServer   FileServer
@@ -23,7 +23,7 @@ type ExtractOptions struct {
 }
 
 func DetermineIfSingleRoot(sourceFile string) (bool, error) {
-	isSingleRoot := false
+	isSingleRoot := true
 
 	var rootName string
 
