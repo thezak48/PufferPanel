@@ -74,7 +74,7 @@ func (ss *Server) Get(id string) (*models.Server, error) {
 }
 
 func (ss *Server) Update(model *models.Server) error {
-	res := ss.DB.Omit(clause.Associations).Save(model)
+	res := ss.DB.Omit(clause.Associations).Omit("node_id").Save(model)
 	return res.Error
 }
 
