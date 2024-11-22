@@ -11,9 +11,9 @@ type Server struct {
 	Name       string `gorm:"column:name;not null;size:40;unique" json:"-" validate:"required,printascii"`
 	Identifier string `gorm:"column:identifier;primaryKey;size:20" json:"-" validate:"required,printascii"`
 
-	RawNodeID *uint `gorm:"column:node_id;index" json:"-" validate:"-"`
+	RawNodeID *uint `gorm:"column:node_id;index;->;<-:create" json:"-" validate:"-"`
 	NodeID    uint  `gorm:"-" json:"-" validate:"-"`
-	Node      Node  `gorm:"foreignKey:RawNodeID" json:"-" validate:"-"`
+	Node      Node  `gorm:"foreignKey:RawNodeID;->;<-:create" json:"-" validate:"-"`
 
 	IP   string `gorm:"" json:"-" validate:"omitempty,ip|fqdn"`
 	Port uint16 `gorm:"" json:"-" validate:"omitempty"`
