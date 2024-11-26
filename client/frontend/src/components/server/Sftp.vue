@@ -20,7 +20,7 @@ const userCopied = ref(false)
 const userEncoded = ref('')
 
 onMounted(async () => {
-  host.value = props.server.node.publicHost !== '127.0.0.1' ? props.server.node.publicHost : window.location.hostname
+  host.value = (props.server.node.publicHost !== '127.0.0.1' && props.server.node.publicHost !== 'localhost') ? props.server.node.publicHost : window.location.hostname
   host.value = host.value + ':' + props.server.node.sftpPort
   const u = await api.self.get()
   user.value = `${u.email}#${props.server.id}`
