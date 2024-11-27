@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"io"
 	"log"
 	"os"
@@ -14,7 +15,7 @@ import (
 
 func DownloadFile(url, fileName string, env Environment) error {
 	target, err := os.Create(filepath.Join(env.GetRootDirectory(), fileName))
-	defer Close(target)
+	defer utils.Close(target)
 	if err != nil {
 		return err
 	}
@@ -22,7 +23,7 @@ func DownloadFile(url, fileName string, env Environment) error {
 	env.DisplayToConsole(true, "Downloading: "+url+"\n")
 
 	response, err := HttpGet(url)
-	defer CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if err != nil {
 		return err
 	}
@@ -39,7 +40,7 @@ func DownloadFileToCache(url, fileName string) error {
 	}
 
 	target, err := os.Create(fileName)
-	defer Close(target)
+	defer utils.Close(target)
 	if err != nil {
 		return err
 	}
@@ -47,7 +48,7 @@ func DownloadFileToCache(url, fileName string) error {
 	logging.Info.Printf("Downloading: " + url)
 
 	response, err := HttpGet(url)
-	defer CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if err != nil {
 		return err
 	}
@@ -71,20 +72,20 @@ func DownloadViaMaven(downloadUrl string, env Environment) (string, error) {
 
 	useCache := true
 	f, err := os.Open(localPath)
-	defer Close(f)
+	defer utils.Close(f)
 	//cache was readable, so validate
 	if err == nil {
 		h := sha1.New()
 		if _, err := io.Copy(h, f); err != nil {
 			log.Fatal(err)
 		}
-		Close(f)
+		utils.Close(f)
 
 		actualHash := fmt.Sprintf("%x", h.Sum(nil))
 
 		logging.Info.Printf("Downloading hash from %s", sha1Url)
 		response, err := HttpGet(sha1Url)
-		defer CloseResponse(response)
+		defer utils.CloseResponse(response)
 		if err != nil {
 			useCache = false
 		} else {

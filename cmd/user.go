@@ -3,9 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/pufferpanel/pufferpanel/v3/groups"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/database"
 	"github.com/pufferpanel/pufferpanel/v3/models"
 	"github.com/pufferpanel/pufferpanel/v3/services"
@@ -139,7 +140,7 @@ func addUser(cmd *cobra.Command, args []string) {
 		}
 
 		if answers.Admin {
-			perms.Scopes = pufferpanel.AddScope(perms.Scopes, pufferpanel.ScopeAdmin)
+			perms.Scopes = scopes.AddScope(perms.Scopes, scopes.ScopeAdmin)
 		}
 
 		err = ps.UpdatePermissions(perms)
@@ -214,7 +215,7 @@ type userCreate struct {
 }
 
 func editUser(cmd *cobra.Command, args []string) {
-	if !pufferpanel.UserInGroup() {
+	if !groups.IsUserIn(groups.PufferPanelGroup) {
 		fmt.Printf("You do not have permission to use this command")
 		return
 	}
@@ -308,9 +309,9 @@ func editUser(cmd *cobra.Command, args []string) {
 
 			//perms.Admin = prompt
 			if prompt {
-				perms.Scopes = pufferpanel.AddScope(perms.Scopes, pufferpanel.ScopeAdmin)
+				perms.Scopes = scopes.AddScope(perms.Scopes, scopes.ScopeAdmin)
 			} else {
-				perms.Scopes = pufferpanel.RemoveScope(perms.Scopes, pufferpanel.ScopeAdmin)
+				perms.Scopes = scopes.RemoveScope(perms.Scopes, scopes.ScopeAdmin)
 			}
 
 			err = ps.UpdatePermissions(perms)

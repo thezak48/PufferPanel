@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/config"
+	"github.com/pufferpanel/pufferpanel/v3/files"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"io"
 	"net/http"
 	"os"
@@ -30,10 +32,10 @@ func downloadModpack(file File) error {
 	if err != nil {
 		return err
 	}
-	defer pufferpanel.Close(tmpFile)
+	defer utils.Close(tmpFile)
 
 	response, err := pufferpanel.Http().Get(file.DownloadUrl)
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if err != nil {
 		return err
 	}
@@ -44,8 +46,8 @@ func downloadModpack(file File) error {
 	if err != nil {
 		return err
 	}
-	pufferpanel.Close(tmpFile)
-	pufferpanel.CloseResponse(response)
+	utils.Close(tmpFile)
+	utils.CloseResponse(response)
 
 	err = os.Rename(tmpFile.Name(), cacheZipFileLocation)
 	if err != nil {
@@ -68,7 +70,7 @@ func getManifest(clientFile File) (Manifest, error) {
 		return Manifest{}, os.ErrNotExist
 	}
 	manifestFile, err := extractFile(getCacheFilePath(clientFile), "manifest.json")
-	defer pufferpanel.Close(manifestFile)
+	defer utils.Close(manifestFile)
 
 	if err != nil {
 		return Manifest{}, err
@@ -84,7 +86,7 @@ func extractFile(zipFile, fileName string) (*os.File, error) {
 
 	file, err := os.Open(filepath.Join(folder, fileName))
 	if err != nil && os.IsNotExist(err) {
-		err = pufferpanel.Extract(nil, zipFile, folder, fileName, false, nil)
+		err = files.Extract(nil, zipFile, folder, fileName, false, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +98,7 @@ func extractFile(zipFile, fileName string) (*os.File, error) {
 
 func readVariableFile(serverFile File) (map[string]string, error) {
 	varFile, err := extractFile(getCacheFilePath(serverFile), "variables.txt")
-	defer pufferpanel.Close(varFile)
+	defer utils.Close(varFile)
 
 	if err != nil {
 		return nil, err

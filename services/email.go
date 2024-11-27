@@ -7,7 +7,9 @@ import (
 	emailAssets "github.com/pufferpanel/pufferpanel/v3/assets/email"
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/email"
+	"github.com/pufferpanel/pufferpanel/v3/files"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"html/template"
 	"io/fs"
 	"os"
@@ -39,7 +41,7 @@ func LoadEmailService() {
 
 	var merged fs.ReadFileFS
 	if config.EmailTemplateFolder.Value() != "" {
-		merged = pufferpanel.NewMergedFS(os.DirFS(config.EmailTemplateFolder.Value()), emailAssets.FS)
+		merged = files.NewMergedFS(os.DirFS(config.EmailTemplateFolder.Value()), emailAssets.FS)
 	} else {
 		merged = emailAssets.FS
 	}
@@ -48,7 +50,7 @@ func LoadEmailService() {
 	if err != nil {
 		panic(err)
 	}
-	defer pufferpanel.Close(emailDefinition)
+	defer utils.Close(emailDefinition)
 
 	var mapping map[string]*emailDeclaration
 	err = json.NewDecoder(emailDefinition).Decode(&mapping)

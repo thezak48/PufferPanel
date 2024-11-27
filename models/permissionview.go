@@ -1,11 +1,13 @@
 package models
 
-import "github.com/pufferpanel/pufferpanel/v3"
+import (
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
+)
 
 type PermissionView struct {
 	ServerIdentifier string `json:"serverIdentifier,omitempty"`
 
-	Scopes []*pufferpanel.Scope `json:"scopes"`
+	Scopes []*scopes.Scope `json:"scopes"`
 } //@name Permissions
 
 func FromPermission(p *Permissions) *PermissionView {
@@ -14,14 +16,14 @@ func FromPermission(p *Permissions) *PermissionView {
 	}
 
 	if model.Scopes == nil {
-		model.Scopes = make([]*pufferpanel.Scope, 0)
+		model.Scopes = make([]*scopes.Scope, 0)
 	}
 
 	return model
 }
 
 type UserPermissionsView struct {
-	Username string               `json:"username,omitempty"`
-	Email    string               `json:"email"`
-	Scopes   []*pufferpanel.Scope `json:"scopes"`
+	Username string          `json:"username,omitempty"`
+	Email    string          `json:"email"`
+	Scopes   []*scopes.Scope `json:"scopes"`
 }

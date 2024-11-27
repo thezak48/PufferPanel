@@ -9,6 +9,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/logging"
 	"github.com/pufferpanel/pufferpanel/v3/oauth2"
 	"github.com/pufferpanel/pufferpanel/v3/servers"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/ssh"
 	"net"
@@ -112,7 +113,7 @@ func runServer() error {
 }
 
 func HandleConn(conn net.Conn, serverConfig *ssh.ServerConfig) {
-	defer pufferpanel.Close(conn)
+	defer utils.Close(conn)
 	defer pufferpanel.Recover()
 	logging.Info.Printf("SFTP connection from %s", conn.RemoteAddr().String())
 	e := handleConn(conn, serverConfig)
@@ -124,7 +125,7 @@ func HandleConn(conn net.Conn, serverConfig *ssh.ServerConfig) {
 }
 func handleConn(conn net.Conn, serverConfig *ssh.ServerConfig) error {
 	sc, chans, reqs, e := ssh.NewServerConn(conn, serverConfig)
-	defer pufferpanel.Close(sc)
+	defer utils.Close(sc)
 	if e != nil {
 		return e
 	}

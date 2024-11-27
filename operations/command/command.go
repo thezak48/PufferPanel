@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 )
 
 type Command struct {
@@ -20,7 +21,7 @@ func (c Command) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationResu
 	for _, cmd := range c.Commands {
 		logging.Info.Printf("Executing command: %s", cmd)
 		env.DisplayToConsole(true, fmt.Sprintf("Executing: %s\n", cmd))
-		cmdToExec, cmdArgs := pufferpanel.SplitArguments(cmd)
+		cmdToExec, cmdArgs := utils.SplitArguments(cmd)
 		ch := make(chan error, 1)
 		err := env.Execute(pufferpanel.ExecutionData{
 			Command:     cmdToExec,

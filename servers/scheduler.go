@@ -6,6 +6,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"os"
 	"path/filepath"
 	"time"
@@ -28,7 +29,7 @@ func LoadScheduler(serverId string) (*Scheduler, error) {
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
-	defer pufferpanel.Close(file)
+	defer utils.Close(file)
 
 	scheduler := NewDefaultScheduler(serverId)
 	if file != nil {

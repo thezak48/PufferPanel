@@ -6,6 +6,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"io"
 	"net/http"
 	"net/url"
@@ -18,7 +19,7 @@ func getLatestFiles(projectId uint) ([]File, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 
 	if response.StatusCode == http.StatusNotFound {
 		return nil, nil
@@ -48,7 +49,7 @@ func getFileById(projectId, fileId uint) (File, error) {
 	if err != nil {
 		return File{}, err
 	}
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 
 	if response.StatusCode == http.StatusNotFound {
 		return File{}, fmt.Errorf("file id %d not found", fileId)

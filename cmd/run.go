@@ -16,6 +16,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/servers"
 	"github.com/pufferpanel/pufferpanel/v3/services"
 	"github.com/pufferpanel/pufferpanel/v3/sftp"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/pufferpanel/pufferpanel/v3/web"
 	"github.com/spf13/cobra"
 	"net"
@@ -60,7 +61,7 @@ func internalRun() (terminate chan bool, success bool) {
 		terminate <- true
 	}()
 
-	pufferpanel.DetermineKernelSupport()
+	utils.DetermineKernelSupport()
 
 	router := gin.New()
 	router.Use(gin.Recovery())

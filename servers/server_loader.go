@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/config"
+	"github.com/pufferpanel/pufferpanel/v3/files"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
 	"os"
 	"path/filepath"
@@ -102,7 +103,7 @@ func LoadFromData(id string, source []byte) (*Server, error) {
 		data.Scheduler.Init()
 	}
 
-	data.fileServer, err = pufferpanel.NewFileServer(data.RunningEnvironment.GetRootDirectory(), data.RunningEnvironment.GetUid(), data.RunningEnvironment.GetGid())
+	data.fileServer, err = files.NewFileServer(data.RunningEnvironment.GetRootDirectory(), data.RunningEnvironment.GetUid(), data.RunningEnvironment.GetGid())
 	if err != nil {
 		return nil, err
 	}

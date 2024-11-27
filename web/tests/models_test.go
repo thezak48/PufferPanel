@@ -1,9 +1,9 @@
 package tests
 
 import (
-	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/database"
 	"github.com/pufferpanel/pufferpanel/v3/models"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"github.com/pufferpanel/pufferpanel/v3/services"
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
@@ -50,7 +50,7 @@ var loginOAuth2Admin = &models.Client{
 }
 
 var loginOAuth2AdminPermissions = &models.Permissions{
-	Scopes: []*pufferpanel.Scope{pufferpanel.ScopeAdmin},
+	Scopes: []*scopes.Scope{scopes.ScopeAdmin},
 }
 
 const loginOAuth2AdminSecret = "rawr"
@@ -104,7 +104,7 @@ func initLoginNoServersUser(db *gorm.DB) error {
 
 	perms := &models.Permissions{
 		UserId: &loginNoServerViewUser.ID,
-		Scopes: []*pufferpanel.Scope{pufferpanel.ScopeLogin},
+		Scopes: []*scopes.Scope{scopes.ScopeLogin},
 	}
 	err = db.Create(perms).Error
 	return err
@@ -118,7 +118,7 @@ func initLoginAdminUser(db *gorm.DB) error {
 
 	perms := &models.Permissions{
 		UserId: &loginAdminUser.ID,
-		Scopes: []*pufferpanel.Scope{pufferpanel.ScopeAdmin},
+		Scopes: []*scopes.Scope{scopes.ScopeAdmin},
 	}
 	err = db.Create(perms).Error
 	return err
@@ -137,7 +137,7 @@ func initOauth2Client(db *gorm.DB) error {
 
 	perms := &models.Permissions{
 		ClientId: &loginOAuth2Admin.ID,
-		Scopes:   []*pufferpanel.Scope{pufferpanel.ScopeAdmin},
+		Scopes:   []*scopes.Scope{scopes.ScopeAdmin},
 	}
 	err = db.Create(perms).Error
 	return err

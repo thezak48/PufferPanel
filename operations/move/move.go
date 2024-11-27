@@ -2,6 +2,7 @@ package move
 
 import (
 	"github.com/pufferpanel/pufferpanel/v3"
+	"github.com/pufferpanel/pufferpanel/v3/files"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
 	"os"
 	"path/filepath"
@@ -32,7 +33,7 @@ func (m Move) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationResult 
 	return pufferpanel.OperationResult{Error: nil}
 }
 
-func resolve(fs pufferpanel.FileServer, source string, target string) (result map[string]string, valid bool) {
+func resolve(fs files.FileServer, source string, target string) (result map[string]string, valid bool) {
 	result = make(map[string]string)
 	sourceFiles, _ := fs.Glob(source)
 	info, err := fs.Stat(target)

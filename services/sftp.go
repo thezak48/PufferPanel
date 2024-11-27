@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/database"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"golang.org/x/crypto/ssh"
 	"strings"
 )
@@ -37,7 +38,7 @@ func (s *DatabaseSFTPAuthorization) Validate(username, password string) (perms *
 		return nil, errors.New("incorrect username or password")
 	}
 
-	if !pufferpanel.ContainsScope(serverPerms.Scopes, pufferpanel.ScopeServerSftp) {
+	if !scopes.ContainsScope(serverPerms.Scopes, scopes.ScopeServerSftp) {
 		return nil, errors.New("incorrect username or password")
 	}
 

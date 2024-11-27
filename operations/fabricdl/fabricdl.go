@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/pufferpanel/pufferpanel/v3"
+	"github.com/pufferpanel/pufferpanel/v3/files"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"path"
 )
 
@@ -24,7 +26,7 @@ func (f *Fabricdl) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationRe
 	if err != nil {
 		return pufferpanel.OperationResult{Error: err}
 	}
-	defer pufferpanel.Close(response.Body)
+	defer utils.Close(response.Body)
 
 	var metadata []FabricMetadata
 	err = json.NewDecoder(response.Body).Decode(&metadata)
@@ -41,7 +43,7 @@ func (f *Fabricdl) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationRe
 		return pufferpanel.OperationResult{Error: err}
 	}
 
-	err = pufferpanel.CopyFile(file, path.Join(env.GetRootDirectory(), "fabric-installer.jar"))
+	err = files.CopyFile(file, path.Join(env.GetRootDirectory(), "fabric-installer.jar"))
 	if err != nil {
 		return pufferpanel.OperationResult{Error: err}
 	}

@@ -5,7 +5,9 @@ import (
 	"errors"
 	"github.com/hashicorp/go-version"
 	"github.com/pufferpanel/pufferpanel/v3"
+	"github.com/pufferpanel/pufferpanel/v3/files"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"path"
 	"strings"
 )
@@ -38,7 +40,7 @@ func (op NeoforgeDL) Run(args pufferpanel.RunOperatorArgs) pufferpanel.Operation
 	}
 
 	//copy from the cache
-	err = pufferpanel.CopyFile(localFile, path.Join(env.GetRootDirectory(), op.Filename))
+	err = files.CopyFile(localFile, path.Join(env.GetRootDirectory(), op.Filename))
 	if err != nil {
 		return pufferpanel.OperationResult{Error: err}
 	}
@@ -50,7 +52,7 @@ func (op NeoforgeDL) Run(args pufferpanel.RunOperatorArgs) pufferpanel.Operation
 
 func getLatestForMCVersion(minecraftVersion string) (string, error) {
 	response, err := pufferpanel.HttpGet(MetadataUrl)
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if err != nil {
 		return "", err
 	}

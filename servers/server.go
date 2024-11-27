@@ -8,7 +8,9 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/conditions"
 	"github.com/pufferpanel/pufferpanel/v3/config"
+	"github.com/pufferpanel/pufferpanel/v3/files"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/spf13/cast"
 	"io"
 	"log"
@@ -28,7 +30,7 @@ type Server struct {
 	Scheduler          *Scheduler              `json:"-"`
 	stopChan           chan bool
 	waitForConsole     sync.Locker
-	fileServer         pufferpanel.FileServer
+	fileServer         files.FileServer
 }
 
 var queue *list.List
@@ -197,7 +199,7 @@ func (p *Server) Start() error {
 	} else {
 		//we have a list
 		var possibleCommands []pufferpanel.Command
-		err = pufferpanel.UnmarshalTo(p.Execution.Command, &possibleCommands)
+		err = utils.UnmarshalTo(p.Execution.Command, &possibleCommands)
 		if err != nil {
 			return err
 		}
@@ -242,13 +244,13 @@ func (p *Server) Start() error {
 
 	data := p.DataToMap()
 
-	commandLine := pufferpanel.ReplaceTokens(command.Command, data)
+	commandLine := utils.ReplaceTokens(command.Command, data)
 
-	cmd, args := pufferpanel.SplitArguments(commandLine)
+	cmd, args := utils.SplitArguments(commandLine)
 	err = p.RunningEnvironment.ExecuteAsync(pufferpanel.ExecutionData{
 		Command:     cmd,
 		Arguments:   args,
-		Environment: pufferpanel.ReplaceTokensInMap(p.Execution.EnvironmentVariables, data),
+		Environment: utils.ReplaceTokensInMap(p.Execution.EnvironmentVariables, data),
 		Variables:   p.DataToMap(),
 		Callback:    p.afterExit,
 		StdInConfig: command.StdIn,
@@ -587,16 +589,16 @@ func (p *Server) GetItem(name string) (*FileData, error) {
 	}
 }
 
-func (p *Server) ArchiveItems(files []string, destination string) error {
+func (p *Server) ArchiveItems(sourceFiles []string, destination string) error {
 	// This may technically error out in other cases
 	if _, err := os.Stat(destination); err != nil && !os.IsNotExist(err) {
 		return pufferpanel.ErrFileExists
 	}
-	return pufferpanel.Compress(p.GetFileServer(), destination, files)
+	return files.Compress(p.GetFileServer(), destination, sourceFiles)
 }
 
 func (p *Server) Extract(source, destination string) error {
-	return pufferpanel.Extract(p.GetFileServer(), source, destination, "*", false, nil)
+	return files.Extract(p.GetFileServer(), source, destination, "*", false, nil)
 }
 
 func (p *Server) valid() bool {
@@ -636,6 +638,6 @@ func (p *Server) RunCondition(condition string, extraData map[string]interface{}
 	return conditions.ResolveIf(condition, data, CreateFunctions(p.GetEnvironment()))
 }
 
-func (p *Server) GetFileServer() pufferpanel.FileServer {
+func (p *Server) GetFileServer() files.FileServer {
 	return p.fileServer
 }

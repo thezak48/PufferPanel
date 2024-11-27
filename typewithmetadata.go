@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"reflect"
 )
 
@@ -59,7 +60,7 @@ func (t *MetadataType) MarshalJSON() ([]byte, error) {
 
 // ParseMetadata Parses the metadata into the target interface
 func (t *MetadataType) ParseMetadata(target interface{}) error {
-	return UnmarshalTo(t, target)
+	return utils.UnmarshalTo(t, target)
 }
 
 // UnmarshalJSON parses a type with this declaration, storing what it needs into metadata and type
@@ -121,7 +122,7 @@ func (t *ConditionalMetadataType) MarshalJSON() ([]byte, error) {
 
 // ParseMetadata Parses the metadata into the target interface
 func (t *ConditionalMetadataType) ParseMetadata(target interface{}) error {
-	return UnmarshalTo(t, target)
+	return utils.UnmarshalTo(t, target)
 }
 
 func encode(buf *bytes.Buffer, k string, v any) error {
@@ -129,6 +130,6 @@ func encode(buf *bytes.Buffer, k string, v any) error {
 	if err != nil {
 		return err
 	}
-	buf.WriteString("\"" + k + "\": " + string(d) + "")
+	buf.WriteString(fmt.Sprintf("\"%s\": %s", k, d))
 	return nil
 }

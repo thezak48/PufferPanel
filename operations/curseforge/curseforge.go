@@ -4,7 +4,9 @@ import (
 	"errors"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/config"
+	"github.com/pufferpanel/pufferpanel/v3/files"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"io"
 	"net/http"
 	"os"
@@ -121,7 +123,7 @@ func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationR
 	serverZipPath := getCacheFilePath(serverFile)
 	logging.Debug.Printf("Extracting modpack from %s\n", serverZipPath)
 	env.DisplayToConsole(true, "Extracting modpack from %s", serverZipPath)
-	err = pufferpanel.Extract(nil, serverZipPath, env.GetRootDirectory(), "*", true, nil)
+	err = files.Extract(nil, serverZipPath, env.GetRootDirectory(), "*", true, nil)
 	if err != nil {
 		return pufferpanel.OperationResult{Error: err}
 	}
@@ -183,7 +185,7 @@ func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationR
 					return pufferpanel.OperationResult{Error: err}
 				}
 				//copy to server
-				err = pufferpanel.CopyFile(jarFile, filepath.Join(env.GetRootDirectory(), forgeInstaller))
+				err = files.CopyFile(jarFile, filepath.Join(env.GetRootDirectory(), forgeInstaller))
 				if err != nil {
 					return pufferpanel.OperationResult{Error: err}
 				}
@@ -226,7 +228,7 @@ func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationR
 						return pufferpanel.OperationResult{Error: err}
 					}
 				}
-				err = pufferpanel.CopyFile(cachePath, runJarFile)
+				err = files.CopyFile(cachePath, runJarFile)
 				if err != nil {
 					return pufferpanel.OperationResult{Error: err}
 				}
@@ -373,9 +375,9 @@ func downloadFile(url, target string) error {
 	if err != nil {
 		return err
 	}
-	defer pufferpanel.Close(file)
+	defer utils.Close(file)
 	response, err := pufferpanel.Http().Get(url)
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if err != nil {
 		return err
 	}

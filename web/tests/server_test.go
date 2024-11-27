@@ -11,7 +11,9 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/database"
 	"github.com/pufferpanel/pufferpanel/v3/models"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"github.com/pufferpanel/pufferpanel/v3/servers"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
@@ -197,7 +199,7 @@ func TestServers(t *testing.T) {
 			switch msg["type"].(string) {
 			case pufferpanel.MessageTypeLog:
 				var ms pufferpanel.ServerLogs
-				err = pufferpanel.UnmarshalTo(msgData, &ms)
+				err = utils.UnmarshalTo(msgData, &ms)
 				if err != nil {
 					fmt.Printf("Failed to decode message: %s\n", err.Error())
 					continue
@@ -245,8 +247,8 @@ func TestServers(t *testing.T) {
 		found := false
 		for _, v := range data {
 			if v.Email == loginNoLoginUser.Email {
-				var expectedScopes = []*pufferpanel.Scope{
-					pufferpanel.ScopeServerView, pufferpanel.ScopeServerViewData,
+				var expectedScopes = []*scopes.Scope{
+					scopes.ScopeServerView, scopes.ScopeServerViewData,
 				}
 				if !assert.Equal(t, expectedScopes, v.Scopes) {
 					return

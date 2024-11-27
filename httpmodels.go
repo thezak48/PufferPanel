@@ -1,13 +1,15 @@
 package pufferpanel
 
+import "github.com/pufferpanel/pufferpanel/v3/utils"
+
 type ServerIdResponse struct {
 	Id string `json:"id"`
 } //@name ServerId
 
 type ServerStats struct {
-	Cpu    float64   `json:"cpu"`
-	Memory float64   `json:"memory"`
-	Jvm    *JvmStats `json:"jvm,omitempty"`
+	Cpu    float64         `json:"cpu"`
+	Memory float64         `json:"memory"`
+	Jvm    *utils.JvmStats `json:"jvm,omitempty"`
 } //@name ServerStats
 
 type ServerLogs struct {

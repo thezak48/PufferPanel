@@ -17,6 +17,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
 	"github.com/pufferpanel/pufferpanel/v3/servers"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/spf13/cast"
 	"io/fs"
 	"log"
@@ -264,14 +265,14 @@ func main() {
 	for _, scenario := range testScenarios {
 		skip := false
 		for _, v := range templatesToSkip {
-			if pufferpanel.CompareWildcard(scenario.Name, v) {
+			if utils.CompareWildcard(scenario.Name, v) {
 				skip = true
 				break
 			}
 		}
 		if skip {
 			for _, v := range mustTest {
-				if pufferpanel.CompareWildcard(scenario.Name, v) {
+				if utils.CompareWildcard(scenario.Name, v) {
 					skip = false
 					break
 				}
@@ -383,7 +384,7 @@ func readDataTxtFile(fileName string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer pufferpanel.Close(file)
+	defer utils.Close(file)
 
 	result := make(map[string]interface{})
 	scanner := bufio.NewScanner(file)
@@ -402,7 +403,7 @@ func readDataJsonFile(fileName string) ([]*TestData, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer pufferpanel.Close(file)
+	defer utils.Close(file)
 
 	result := make([]*TestData, 0)
 	err = json.NewDecoder(file).Decode(&result)

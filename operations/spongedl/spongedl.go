@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/pufferpanel/pufferpanel/v3"
+	"github.com/pufferpanel/pufferpanel/v3/files"
 	"github.com/pufferpanel/pufferpanel/v3/operations/forgedl"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"net/http"
 	"os"
 	"path"
@@ -109,7 +111,7 @@ func (op SpongeDl) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationRe
 			}
 
 			//going to stick the spongeforge rename in, to assist with those modpacks
-			err = pufferpanel.CopyFile(file, path.Join(env.GetRootDirectory(), "mods", "_aspongeforge.jar"))
+			err = files.CopyFile(file, path.Join(env.GetRootDirectory(), "mods", "_aspongeforge.jar"))
 			if err != nil {
 				return pufferpanel.OperationResult{Error: err}
 			}
@@ -121,7 +123,7 @@ func (op SpongeDl) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationRe
 				return pufferpanel.OperationResult{Error: err}
 			}
 
-			err = pufferpanel.CopyFile(file, path.Join(env.GetRootDirectory(), "server.jar"))
+			err = files.CopyFile(file, path.Join(env.GetRootDirectory(), "server.jar"))
 			if err != nil {
 				return pufferpanel.OperationResult{Error: err}
 			}
@@ -151,7 +153,7 @@ func (op SpongeDl) getLatestVersion(env pufferpanel.Environment) (SpongeApiV2Ver
 	if err != nil {
 		return data, err
 	}
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if response.StatusCode != http.StatusOK {
 		env.DisplayToConsole(true, "Failed to get the Sponge information from %s: %s", url, response.Status)
 		return data, errors.New(response.Status)
@@ -170,7 +172,7 @@ func (op SpongeDl) getSpecificVersion(env pufferpanel.Environment, version strin
 	if err != nil {
 		return data, err
 	}
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if response.StatusCode != http.StatusOK {
 		env.DisplayToConsole(true, "Failed to get the Sponge information from %s: %s", url, response.Status)
 		return data, errors.New(response.Status)

@@ -3,6 +3,7 @@ package writefile
 import (
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"os"
 )
 
@@ -22,7 +23,7 @@ func (c WriteFile) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationRe
 	if err != nil {
 		return pufferpanel.OperationResult{Error: err}
 	}
-	defer pufferpanel.Close(file)
+	defer utils.Close(file)
 
 	_, err = file.Write([]byte(c.Text))
 	return pufferpanel.OperationResult{Error: err}

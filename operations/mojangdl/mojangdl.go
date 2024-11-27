@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 )
 
 const VersionJsonUrl = "https://launchermeta.mojang.com/mc/game/version_manifest.json"
@@ -62,7 +63,7 @@ func (op MojangDl) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationRe
 
 func downloadServerFromJson(url, target string, env pufferpanel.Environment) error {
 	response, err := pufferpanel.HttpGet(url)
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if err != nil {
 		return err
 	}

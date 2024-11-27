@@ -15,6 +15,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/query"
 	"github.com/pufferpanel/pufferpanel/v3/response"
 	"github.com/pufferpanel/pufferpanel/v3/servers"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/spf13/cast"
 	"io"
 	"mime"
@@ -556,7 +557,7 @@ func getFile(c *gin.Context) {
 	data, err := server.GetItem(targetPath)
 	defer func() {
 		if data != nil {
-			pufferpanel.Close(data.Contents)
+			utils.Close(data.Contents)
 		}
 	}()
 
@@ -629,7 +630,7 @@ func putFile(c *gin.Context) {
 	}
 
 	file, err := server.GetFileServer().OpenFile(targetPath, os.O_CREATE|os.O_TRUNC|os.O_RDWR, 0644)
-	defer pufferpanel.Close(file)
+	defer utils.Close(file)
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}

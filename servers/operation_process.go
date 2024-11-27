@@ -25,6 +25,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/operations/spongedl"
 	"github.com/pufferpanel/pufferpanel/v3/operations/steamgamedl"
 	"github.com/pufferpanel/pufferpanel/v3/operations/writefile"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/spf13/cast"
 )
 
@@ -75,22 +76,22 @@ func GenerateProcess(directions []pufferpanel.ConditionalMetadataType, environme
 			switch r := v.(type) {
 			case string:
 				{
-					mapCopy[k] = pufferpanel.ReplaceTokens(r, dataMap)
+					mapCopy[k] = utils.ReplaceTokens(r, dataMap)
 				}
 			case []string:
 				{
-					mapCopy[k] = pufferpanel.ReplaceTokensInArr(r, dataMap)
+					mapCopy[k] = utils.ReplaceTokensInArr(r, dataMap)
 				}
 			case map[string]string:
 				{
-					mapCopy[k] = pufferpanel.ReplaceTokensInMap(r, dataMap)
+					mapCopy[k] = utils.ReplaceTokensInMap(r, dataMap)
 				}
 			case []interface{}:
 				{
 					//if we can convert this to a string list, we can work with it
 					temp := cast.ToStringSlice(r)
 					if len(temp) == len(r) {
-						mapCopy[k] = pufferpanel.ReplaceTokensInArr(temp, dataMap)
+						mapCopy[k] = utils.ReplaceTokensInArr(temp, dataMap)
 					} else {
 						mapCopy[k] = v
 					}
@@ -100,7 +101,7 @@ func GenerateProcess(directions []pufferpanel.ConditionalMetadataType, environme
 			}
 		}
 
-		envMap := pufferpanel.ReplaceTokensInMap(env, dataMap)
+		envMap := utils.ReplaceTokensInMap(env, dataMap)
 
 		opCreate := pufferpanel.CreateOperation{
 			OperationArgs:        mapCopy,

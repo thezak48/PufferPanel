@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/shirou/gopsutil/process"
 	"github.com/spf13/cast"
 	"os"
@@ -126,7 +127,7 @@ func (s *standard) GetStats() (*pufferpanel.ServerStats, error) {
 		}
 
 		if s.Server.Stats.Type == "jcmd" {
-			stats.Jvm = &pufferpanel.JvmStats{}
+			stats.Jvm = &utils.JvmStats{}
 		}
 
 		return stats, nil

@@ -7,6 +7,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/middleware"
 	"github.com/pufferpanel/pufferpanel/v3/models"
 	"github.com/pufferpanel/pufferpanel/v3/response"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"github.com/pufferpanel/pufferpanel/v3/services"
 	"net/http"
 	"time"
@@ -87,7 +88,7 @@ func createSession(c *gin.Context, user *models.User) {
 		return
 	}
 
-	if !pufferpanel.ContainsScope(perms.Scopes, pufferpanel.ScopeLogin) {
+	if !scopes.ContainsScope(perms.Scopes, scopes.ScopeLogin) {
 		response.HandleError(c, pufferpanel.ErrLoginNotPermitted, http.StatusForbidden)
 		return
 	}
@@ -119,8 +120,8 @@ type LoginRequestData struct {
 }
 
 type LoginResponse struct {
-	Scopes    []*pufferpanel.Scope `json:"scopes,omitempty"`
-	OtpNeeded bool                 `json:"otpNeeded,omitempty"`
+	Scopes    []*scopes.Scope `json:"scopes,omitempty"`
+	OtpNeeded bool            `json:"otpNeeded,omitempty"`
 }
 
 type OtpRequestData struct {

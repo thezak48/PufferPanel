@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/config"
+	"github.com/pufferpanel/pufferpanel/v3/groups"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
 	"github.com/spf13/cobra"
 	"os"
@@ -11,7 +12,7 @@ import (
 )
 
 func main() {
-	if !pufferpanel.UserInGroup("pufferpanel") {
+	if !groups.IsUserIn(groups.PufferPanelGroup) {
 		fmt.Println("You do not have permission to use this command")
 		return
 	}

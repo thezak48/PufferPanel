@@ -6,23 +6,25 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/middleware"
 	"github.com/pufferpanel/pufferpanel/v3/models"
 	"github.com/pufferpanel/pufferpanel/v3/response"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"github.com/pufferpanel/pufferpanel/v3/services"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/spf13/cast"
 	"net/http"
 )
 
 func registerUsers(g *gin.RouterGroup) {
-	g.Handle("GET", "", middleware.RequiresPermission(pufferpanel.ScopeUserInfoSearch), searchUsers)
-	g.Handle("POST", "", middleware.RequiresPermission(pufferpanel.ScopeUserInfoEdit), createUser)
+	g.Handle("GET", "", middleware.RequiresPermission(scopes.ScopeUserInfoSearch), searchUsers)
+	g.Handle("POST", "", middleware.RequiresPermission(scopes.ScopeUserInfoEdit), createUser)
 	g.Handle("OPTIONS", "", response.CreateOptions("GET", "POST"))
 
-	g.Handle("GET", "/:id", middleware.RequiresPermission(pufferpanel.ScopeUserInfoView), getUser)
-	g.Handle("POST", "/:id", middleware.RequiresPermission(pufferpanel.ScopeUserInfoEdit), updateUser)
-	g.Handle("DELETE", "/:id", middleware.RequiresPermission(pufferpanel.ScopeUserInfoEdit), deleteUser)
+	g.Handle("GET", "/:id", middleware.RequiresPermission(scopes.ScopeUserInfoView), getUser)
+	g.Handle("POST", "/:id", middleware.RequiresPermission(scopes.ScopeUserInfoEdit), updateUser)
+	g.Handle("DELETE", "/:id", middleware.RequiresPermission(scopes.ScopeUserInfoEdit), deleteUser)
 	g.Handle("OPTIONS", "/:id", response.CreateOptions("GET", "POST", "DELETE"))
 
-	g.Handle("GET", "/:id/perms", middleware.RequiresPermission(pufferpanel.ScopeUserPermsView), getUserPerms)
-	g.Handle("PUT", "/:id/perms", middleware.RequiresPermission(pufferpanel.ScopeUserPermsEdit), setUserPerms)
+	g.Handle("GET", "/:id/perms", middleware.RequiresPermission(scopes.ScopeUserPermsView), getUserPerms)
+	g.Handle("PUT", "/:id/perms", middleware.RequiresPermission(scopes.ScopeUserPermsEdit), setUserPerms)
 	g.Handle("OPTIONS", "/:id/perms", response.CreateOptions("PUT", "GET"))
 }
 
@@ -292,12 +294,12 @@ func setUserPerms(c *gin.Context) {
 	}
 
 	//admins can override, so skip our comparers
-	if pufferpanel.ContainsScope(editorPerms.Scopes, pufferpanel.ScopeAdmin) {
+	if scopes.ContainsScope(editorPerms.Scopes, scopes.ScopeAdmin) {
 		perms.Scopes = viewModel.Scopes
 	} else {
-		allowedScopes := pufferpanel.Union(viewModel.Scopes, editorPerms.Scopes)
+		allowedScopes := utils.Union(viewModel.Scopes, editorPerms.Scopes)
 		//update perms to match this "setup", but not stomp over what the user can't change
-		replacement := pufferpanel.UpdateScopesWhereGranted(perms.Scopes, allowedScopes, editorPerms.Scopes)
+		replacement := scopes.UpdateScopesWhereGranted(perms.Scopes, allowedScopes, editorPerms.Scopes)
 		perms.Scopes = replacement
 	}
 

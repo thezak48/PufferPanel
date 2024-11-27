@@ -5,6 +5,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -95,7 +96,7 @@ func GetConnection() (*gorm.DB, error) {
 func Close() {
 	if dbConn != nil {
 		sqlDB, _ := dbConn.DB()
-		pufferpanel.Close(sqlDB)
+		utils.Close(sqlDB)
 	}
 }
 

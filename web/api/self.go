@@ -1,6 +1,8 @@
 package api
 
 import (
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,23 +16,23 @@ import (
 )
 
 func registerSelf(g *gin.RouterGroup) {
-	g.Handle("GET", "", middleware.RequiresPermission(pufferpanel.ScopeLogin), getSelf)
-	g.Handle("PUT", "", middleware.RequiresPermission(pufferpanel.ScopeSelfEdit), updateSelf)
+	g.Handle("GET", "", middleware.RequiresPermission(scopes.ScopeLogin), getSelf)
+	g.Handle("PUT", "", middleware.RequiresPermission(scopes.ScopeSelfEdit), updateSelf)
 	g.Handle("OPTIONS", "", response.CreateOptions("GET", "PUT"))
 
-	g.Handle("GET", "/otp", middleware.RequiresPermission(pufferpanel.ScopeSelfEdit), getOtpStatus)
-	g.Handle("POST", "/otp", middleware.RequiresPermission(pufferpanel.ScopeSelfEdit), startOtpEnroll)
-	g.Handle("PUT", "/otp", middleware.RequiresPermission(pufferpanel.ScopeSelfEdit), validateOtpEnroll)
+	g.Handle("GET", "/otp", middleware.RequiresPermission(scopes.ScopeSelfEdit), getOtpStatus)
+	g.Handle("POST", "/otp", middleware.RequiresPermission(scopes.ScopeSelfEdit), startOtpEnroll)
+	g.Handle("PUT", "/otp", middleware.RequiresPermission(scopes.ScopeSelfEdit), validateOtpEnroll)
 	g.Handle("OPTIONS", "/otp", response.CreateOptions("GET", "POST", "PUT"))
 
-	g.Handle("DELETE", "/otp/:token", middleware.RequiresPermission(pufferpanel.ScopeSelfEdit), disableOtp)
+	g.Handle("DELETE", "/otp/:token", middleware.RequiresPermission(scopes.ScopeSelfEdit), disableOtp)
 	g.Handle("OPTIONS", "/otp/:token", response.CreateOptions("DELETE"))
 
-	g.Handle("GET", "/oauth2", middleware.RequiresPermission(pufferpanel.ScopeSelfClients), getPersonalOAuth2Clients)
-	g.Handle("POST", "/oauth2", middleware.RequiresPermission(pufferpanel.ScopeSelfClients), createPersonalOAuth2Client)
+	g.Handle("GET", "/oauth2", middleware.RequiresPermission(scopes.ScopeSelfClients), getPersonalOAuth2Clients)
+	g.Handle("POST", "/oauth2", middleware.RequiresPermission(scopes.ScopeSelfClients), createPersonalOAuth2Client)
 	g.Handle("OPTIONS", "/oauth2", response.CreateOptions("GET", "POST"))
 
-	g.Handle("DELETE", "/oauth2/:clientId", middleware.RequiresPermission(pufferpanel.ScopeSelfClients), deletePersonalOAuth2Client)
+	g.Handle("DELETE", "/oauth2/:clientId", middleware.RequiresPermission(scopes.ScopeSelfClients), deletePersonalOAuth2Client)
 	g.Handle("OPTIONS", "/oauth2/:clientId", response.CreateOptions("DELETE"))
 }
 
@@ -297,7 +299,7 @@ func createPersonalOAuth2Client(c *gin.Context) {
 		Description: request.Description,
 	}
 
-	secret, err := pufferpanel.GenerateRandomString(36)
+	secret, err := utils.GenerateRandomString(36)
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}

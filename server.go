@@ -1,15 +1,7 @@
 package pufferpanel
 
 import (
-	"context"
-	"encoding/json"
-	"github.com/spf13/cast"
-	"os/exec"
-	"runtime"
-	"strings"
-	"time"
-
-	"github.com/docker/docker/client"
+	"github.com/pufferpanel/pufferpanel/v3/files"
 )
 
 type Server struct {
@@ -28,30 +20,6 @@ type Server struct {
 	Stats                 MetadataType              `json:"stats,omitempty"`
 	Query                 MetadataType              `json:"query,omitempty"`
 } //@name ServerDefinition
-
-type Task struct {
-	Name         string                    `json:"name"`
-	CronSchedule string                    `json:"cronSchedule"`
-	Description  string                    `json:"description,omitempty"`
-	Operations   []ConditionalMetadataType `json:"operations" binding:"required"`
-} //@name Task
-
-type Variable struct {
-	Type
-	Value        interface{}      `json:"value"`
-	Display      string           `json:"display,omitempty"`
-	Description  string           `json:"desc,omitempty"`
-	Required     bool             `json:"required"`
-	Internal     bool             `json:"internal,omitempty"`
-	UserEditable bool             `json:"userEdit"`
-	Options      []VariableOption `json:"options,omitempty"`
-} //@name Variable
-type variableAlias Variable
-
-type VariableOption struct {
-	Value   interface{} `json:"value"`
-	Display string      `json:"display"`
-} //@name VariableOption
 
 type Execution struct {
 	Command                 interface{}               `json:"command"`
@@ -78,24 +46,9 @@ type Command struct {
 	StdIn   StdinConsoleConfiguration `json:"stdin"`
 } //@name Command
 
-type StdinConsoleConfiguration struct {
-	Type     string `json:"type,omitempty"`
-	IP       string `json:"ip,omitempty"`
-	Port     string `json:"port,omitempty"`
-	Password string `json:"password,omitempty"`
-} //@name StdinConsoleConfiguration
-
-type stdinConfigAlias StdinConsoleConfiguration
-
 type Type struct {
 	Type string `json:"type"`
 } //@name Type
-
-type Requirements struct {
-	OS       string   `json:"os,omitempty"`
-	Arch     string   `json:"arch,omitempty"`
-	Binaries []string `json:"binaries,omitempty"`
-} //@name Requirements
 
 type Group struct {
 	If          string   `json:"if,omitempty"`
@@ -119,81 +72,6 @@ func (s *Server) CopyFrom(replacement *Server) {
 	s.Stats = replacement.Stats
 }
 
-func (r Requirements) Test(server Server) error {
-	osReq := parseRequirementRow(r.OS)
-	if len(osReq) > 0 {
-		passes := false
-		for _, v := range osReq {
-			if v == runtime.GOOS {
-				passes = true
-				break
-			}
-		}
-		if !passes {
-			return ErrUnsupportedOS(runtime.GOOS, strings.ReplaceAll(r.OS, "||", " OR "))
-		}
-	}
-
-	archReq := parseRequirementRow(r.Arch)
-	if len(archReq) > 0 {
-		passes := false
-		for _, v := range archReq {
-			if v == runtime.GOARCH {
-				passes = true
-				break
-			}
-		}
-		if !passes {
-			return ErrUnsupportedArch(runtime.GOARCH, strings.ReplaceAll(r.Arch, "||", " OR "))
-		}
-	}
-
-	//check to see if we support the environment
-	//AKA.... if docker, do we support it
-	var envType Type
-	err := UnmarshalTo(server.Environment, &envType)
-	if err != nil {
-		return err
-	}
-
-	if envType.Type == "docker" {
-		d, err := client.NewClientWithOpts(client.FromEnv)
-		if err != nil {
-			return ErrDockerNotSupported
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-
-		_, err = d.Ping(ctx)
-		if err != nil {
-			return ErrDockerNotSupported
-		}
-	} else {
-		//we cannot check in docker if the binary requirements are good, so we'll skip it for docker
-		//and check them now
-
-		for _, v := range r.Binaries {
-			binaries := parseRequirementRow(v)
-
-			found := true
-			for k, binary := range binaries {
-				parsed := ReplaceTokens(binary, server.DataToMap())
-				binaries[k] = parsed
-				_, err := exec.LookPath(parsed)
-				if err != nil {
-					found = false
-				}
-			}
-			if !found {
-				return ErrMissingBinary(strings.Join(binaries, " OR "))
-			}
-		}
-	}
-
-	return nil
-}
-
 func (s *Server) DataToMap() map[string]interface{} {
 	var result = make(map[string]interface{})
 
@@ -205,78 +83,8 @@ func (s *Server) DataToMap() map[string]interface{} {
 	return result
 }
 
-func parseRequirementRow(str string) []string {
-	if str == "" {
-		return []string{}
-	}
-	d := strings.Split(str, "||")
-	for k, v := range d {
-		d[k] = strings.TrimSpace(v)
-	}
-	return d
-}
-
-func (v *StdinConsoleConfiguration) Replace(variables map[string]interface{}) StdinConsoleConfiguration {
-	return StdinConsoleConfiguration{
-		Type:     v.Type,
-		IP:       ReplaceTokens(v.IP, variables),
-		Port:     ReplaceTokens(v.Port, variables),
-		Password: ReplaceTokens(v.Password, variables),
-	}
-}
-
-func (v *Variable) UnmarshalJSON(data []byte) (err error) {
-	aux := variableAlias{}
-	if err = json.Unmarshal(data, &aux); err != nil {
-		return
-	}
-	if aux.Type.Type == "" {
-		aux.Type = Type{Type: "string"}
-	}
-
-	//default any null value to empty string
-	if aux.Value == nil {
-		aux.Value = ""
-	}
-
-	//convert variable to correct typing
-	switch aux.Type.Type {
-	case "integer":
-		{
-			aux.Value, err = cast.ToIntE(aux.Value)
-			if err != nil {
-				var str string
-				if str, err = cast.ToStringE(aux.Value); err == nil {
-					if str == "" {
-						aux.Value = 0
-					}
-				}
-			}
-		}
-	case "boolean":
-		{
-			aux.Value, err = cast.ToBoolE(aux.Value)
-		}
-	}
-
-	*v = Variable(aux)
-	return
-}
-
-func (v *StdinConsoleConfiguration) UnmarshalJSON(data []byte) error {
-	aux := stdinConfigAlias{}
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-	if aux.Type == "" {
-		aux.Type = "stdin"
-	}
-	*v = StdinConsoleConfiguration(aux)
-	return nil
-}
-
 type DaemonServer interface {
-	GetFileServer() FileServer
+	GetFileServer() files.FileServer
 
 	Extract(source, destination string) error
 

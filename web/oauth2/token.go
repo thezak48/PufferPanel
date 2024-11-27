@@ -3,11 +3,11 @@ package oauth2
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
 	"github.com/pufferpanel/pufferpanel/v3/middleware"
 	"github.com/pufferpanel/pufferpanel/v3/oauth2"
 	"github.com/pufferpanel/pufferpanel/v3/response"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"github.com/pufferpanel/pufferpanel/v3/services"
 	"net/http"
 	"strings"
@@ -67,14 +67,14 @@ func handleTokenRequest(c *gin.Context) {
 				serverId = client.Server.Identifier
 			}
 
-			var scopes []string
+			var allScopes []string
 			ps := &services.Permission{DB: db}
 			perms, err := ps.GetForUserAndServer(client.UserId, serverId)
 			if response.HandleError(c, err, http.StatusInternalServerError) {
 				return
 			}
 
-			if !pufferpanel.ContainsScope(perms.Scopes, pufferpanel.ScopeLogin) {
+			if !scopes.ContainsScope(perms.Scopes, scopes.ScopeLogin) {
 				//because servers don't have an explicit login scope, we need to check the root user
 				if serverId == "" {
 					c.AbortWithStatus(http.StatusForbidden)
@@ -86,19 +86,19 @@ func handleTokenRequest(c *gin.Context) {
 					return
 				}
 
-				if !pufferpanel.ContainsScope(userPerms.Scopes, pufferpanel.ScopeLogin) {
+				if !scopes.ContainsScope(userPerms.Scopes, scopes.ScopeLogin) {
 					c.AbortWithStatus(http.StatusForbidden)
 					return
 				}
 			}
 			for _, v := range perms.Scopes {
-				scopes = append(scopes, v.String())
+				allScopes = append(allScopes, v.String())
 			}
 
 			c.JSON(http.StatusOK, &oauth2.TokenResponse{
 				AccessToken: token,
 				TokenType:   "Bearer",
-				Scope:       strings.Join(scopes, " "),
+				Scope:       strings.Join(allScopes, " "),
 				ExpiresIn:   expiresIn,
 			})
 			return
@@ -154,7 +154,7 @@ func handleTokenRequest(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, &oauth2.ErrorResponse{Error: "invalid_request", ErrorDescription: err.Error()})
 				return
 			}
-			if perms.ID == 0 || !pufferpanel.ContainsScope(perms.Scopes, pufferpanel.ScopeServerSftp) {
+			if perms.ID == 0 || !scopes.ContainsScope(perms.Scopes, scopes.ScopeServerSftp) {
 				c.JSON(http.StatusBadRequest, &oauth2.ErrorResponse{Error: "invalid_request", ErrorDescription: "no access"})
 				return
 			}

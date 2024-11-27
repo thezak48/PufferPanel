@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"slices"
 
 	"github.com/docker/docker/api/types"
@@ -171,7 +172,7 @@ func (d *Docker) GetStats() (*pufferpanel.ServerStats, error) {
 		}
 
 		if d.Server.Stats.Type == "jcmd" {
-			stats.Jvm = &pufferpanel.JvmStats{}
+			stats.Jvm = &utils.JvmStats{}
 		}
 
 		return stats, nil
@@ -195,7 +196,7 @@ func (d *Docker) GetStats() (*pufferpanel.ServerStats, error) {
 	res, err := dockerClient.ContainerStats(ctx, d.ContainerId, false)
 	defer func() {
 		if res.Body != nil {
-			pufferpanel.Close(res.Body)
+			utils.Close(res.Body)
 		}
 	}()
 	if err != nil {
@@ -245,11 +246,11 @@ func (d *Docker) GetStats() (*pufferpanel.ServerStats, error) {
 					logging.Error.Printf("Could not get result of JCMD: %s", err.Error())
 				}
 
-				stats.Jvm = pufferpanel.ParseJCMDResponse(jcmdData)
+				stats.Jvm = utils.ParseJCMDResponse(jcmdData)
 			}
 		}
 		if stats.Jvm == nil {
-			stats.Jvm = &pufferpanel.JvmStats{}
+			stats.Jvm = &utils.JvmStats{}
 		}
 	}
 
@@ -345,7 +346,7 @@ func (d *Docker) PullImage(ctx context.Context, imageName string, force bool) er
 	}()
 
 	r, err := d.cli.ImagePull(ctx, imageName, op)
-	defer pufferpanel.Close(r)
+	defer utils.Close(r)
 	if err != nil {
 		return err
 	}
@@ -375,7 +376,7 @@ func (d *Docker) createContainer(ctx context.Context, data pufferpanel.Execution
 		}
 	}
 
-	imageName := pufferpanel.ReplaceTokens(d.ImageName, data.Variables)
+	imageName := utils.ReplaceTokens(d.ImageName, data.Variables)
 
 	err := d.PullImage(ctx, imageName, false)
 
@@ -398,7 +399,7 @@ func (d *Docker) createContainer(ctx context.Context, data pufferpanel.Execution
 	}
 
 	for k, v := range d.Labels {
-		labels[pufferpanel.ReplaceTokens(k, data.Variables)] = pufferpanel.ReplaceTokens(v, data.Variables)
+		labels[utils.ReplaceTokens(k, data.Variables)] = utils.ReplaceTokens(v, data.Variables)
 	}
 
 	c := d.Config
@@ -498,12 +499,12 @@ func (d *Docker) createContainer(ctx context.Context, data pufferpanel.Execution
 	hostConfig := &baseConfig
 	hostConfig.AutoRemove = true
 	if hostConfig.NetworkMode == "" {
-		hostConfig.NetworkMode = container.NetworkMode(pufferpanel.ReplaceTokens(d.Network, data.Variables))
+		hostConfig.NetworkMode = container.NetworkMode(utils.ReplaceTokens(d.Network, data.Variables))
 	}
 
 	hostConfig.Binds = append(hostConfig.Binds, bindDirs...)
 
-	_, hostConfig.PortBindings, err = nat.ParsePortSpecs(pufferpanel.ReplaceTokensInArr(d.Ports, data.Variables))
+	_, hostConfig.PortBindings, err = nat.ParsePortSpecs(utils.ReplaceTokensInArr(d.Ports, data.Variables))
 	if err != nil {
 		return err
 	}

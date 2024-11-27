@@ -5,6 +5,8 @@ import (
 	"errors"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"golang.org/x/crypto/ssh"
 	"io"
 	"net/http"
@@ -29,7 +31,7 @@ func validateSSH(username string, password string, recurse bool) (*ssh.Permissio
 	request := createRequest(data)
 
 	response, err := pufferpanel.Http().Do(request)
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if err != nil {
 		logging.Error.Printf("error talking to auth server: %s", err)
 		return nil, errors.New("invalid response from authorization server")
@@ -52,8 +54,8 @@ func validateSSH(username string, password string, recurse bool) (*ssh.Permissio
 		return nil, errors.New("incorrect username or password")
 	}
 	sshPerms := &ssh.Permissions{}
-	scopes := strings.Split(respArr["scope"].(string), " ")
-	for _, v := range scopes {
+	grantedScopes := strings.Split(respArr["scope"].(string), " ")
+	for _, v := range grantedScopes {
 
 		t := strings.Split(v, ":")
 		if len(t) != 2 {
@@ -62,7 +64,7 @@ func validateSSH(username string, password string, recurse bool) (*ssh.Permissio
 		serverId := t[0]
 		scope := t[1]
 
-		if pufferpanel.ScopeServerSftp.Is(scope) {
+		if scopes.ScopeServerSftp.Is(scope) {
 			sshPerms.Extensions = make(map[string]string)
 			sshPerms.Extensions["server_id"] = serverId
 			return sshPerms, nil

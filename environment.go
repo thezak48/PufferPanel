@@ -3,6 +3,7 @@ package pufferpanel
 import (
 	"fmt"
 	"github.com/pufferpanel/pufferpanel/v3/config"
+	"github.com/pufferpanel/pufferpanel/v3/connections"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
 	"io"
 	"log"
@@ -134,23 +135,23 @@ func (e *BaseEnvironment) ExecuteAsync(steps ExecutionData) (err error) {
 
 func (e *BaseEnvironment) CreateConsoleStdinProxy(config StdinConsoleConfiguration, base io.WriteCloser) {
 	if config.Type == "telnet" {
-		e.Console = &TelnetConnection{
+		e.Console = &connections.TelnetConnection{
 			IP:       config.IP,
 			Port:     config.Port,
 			Password: config.Password,
 		}
 	} else if config.Type == "rcon" {
-		e.Console = &RCONConnection{
+		e.Console = &connections.RCONConnection{
 			IP:       config.IP,
 			Port:     config.Port,
 			Password: config.Password,
 		}
 	} else if config.Type == "rconws" {
-		e.Console = &RCONWSConnection{
-			IP:          config.IP,
-			Port:        config.Port,
-			Password:    config.Password,
-			Environment: e,
+		e.Console = &connections.RCONWSConnection{
+			IP:       config.IP,
+			Port:     config.Port,
+			Password: config.Password,
+			//Environment: e,
 		}
 	} else {
 		e.Console = &NoStartConsole{Base: base}

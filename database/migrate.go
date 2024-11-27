@@ -6,6 +6,8 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
 	"github.com/pufferpanel/pufferpanel/v3/models"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"gorm.io/gorm"
 )
 
@@ -119,7 +121,7 @@ func Migrate(dbConn *gorm.DB) error {
 
 				for _, v := range templates {
 					var rawMap pufferpanel.MetadataType
-					err = pufferpanel.UnmarshalTo(v.Environment, &rawMap)
+					err = utils.UnmarshalTo(v.Environment, &rawMap)
 					if err != nil {
 						return err
 					}
@@ -206,104 +208,104 @@ func Migrate(dbConn *gorm.DB) error {
 						UserId:           v.UserId,
 						ClientId:         v.ClientId,
 						ServerIdentifier: v.ServerIdentifier,
-						Scopes: []*pufferpanel.Scope{
-							pufferpanel.ScopeLogin,
-							pufferpanel.ScopeSelfEdit,
-							pufferpanel.ScopeSelfClients,
+						Scopes: []*scopes.Scope{
+							scopes.ScopeLogin,
+							scopes.ScopeSelfEdit,
+							scopes.ScopeSelfClients,
 						},
 					}
 
 					//now... map all the perms to the new scopes
 					if v.Admin {
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeAdmin)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeAdmin)
 					}
 
 					if v.CreateServer {
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerCreate)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerCreate)
 					}
 
 					if v.ViewNodes {
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeNodesView)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeNodesView)
 					}
 					if v.EditNodes {
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeNodesCreate)
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeNodesDelete)
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeNodesEdit)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeNodesCreate)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeNodesDelete)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeNodesEdit)
 					}
 					if v.DeployNodes {
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeNodesDeploy)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeNodesDeploy)
 					}
 
 					if v.ViewTemplates {
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeTemplatesView)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeTemplatesView)
 					}
 					if v.EditTemplates {
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeTemplatesLocalEdit)
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeTemplatesRepoCreate)
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeTemplatesRepoDelete)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeTemplatesLocalEdit)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeTemplatesRepoCreate)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeTemplatesRepoDelete)
 					}
 
 					if v.EditUsers {
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeUserInfoEdit)
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeUserPermsEdit)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeUserInfoEdit)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeUserPermsEdit)
 					}
 					if v.ViewUsers {
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeUserInfoSearch)
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeUserInfoView)
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeUserPermsView)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeUserInfoSearch)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeUserInfoView)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeUserPermsView)
 					}
 
 					if v.PanelSettings {
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeSettingsEdit)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeSettingsEdit)
 					}
 
 					if v.ServerIdentifier != nil && *v.ServerIdentifier != "" {
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerClientView)
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerClientEdit)
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerClientCreate)
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerClientDelete)
-						newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerStatus)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerClientView)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerClientEdit)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerClientCreate)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerClientDelete)
+						newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerStatus)
 
 						if v.EditServerData {
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerEditData)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerEditData)
 						}
 						if v.EditServerUsers {
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerUserCreate)
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerUserEdit)
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerUserDelete)
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerUserView)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerUserCreate)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerUserEdit)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerUserDelete)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerUserView)
 						}
 
 						if v.InstallServer {
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerInstall)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerInstall)
 						}
 						if v.ViewServerConsole {
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerConsole)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerConsole)
 						}
 						if v.SendServerConsole {
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerSendCommand)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerSendCommand)
 						}
 
 						if v.StartServer {
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerStart)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerStart)
 						}
 						if v.StopServer {
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerStop)
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerKill)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerStop)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerKill)
 						}
 
 						if v.ViewServerStats {
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerStats)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerStats)
 						}
 
 						if v.SFTPServer {
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerSftp)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerSftp)
 						}
 						if v.ViewServerFiles {
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerFileView)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerFileView)
 						}
 						if v.PutServerFiles {
-							newPerms.Scopes = pufferpanel.AddScope(newPerms.Scopes, pufferpanel.ScopeServerFileEdit)
+							newPerms.Scopes = scopes.AddScope(newPerms.Scopes, scopes.ScopeServerFileEdit)
 						}
 					}
 

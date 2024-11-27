@@ -3,6 +3,7 @@ package servers
 import (
 	"fmt"
 	"github.com/pufferpanel/pufferpanel/v3"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"path/filepath"
 	"sync"
 )
@@ -26,7 +27,7 @@ func CreateEnvironment(environmentType, folder string, server pufferpanel.Server
 	}
 
 	item := factory.Create(server.Identifier)
-	err := pufferpanel.UnmarshalTo(server.Environment.Metadata, item)
+	err := utils.UnmarshalTo(server.Environment.Metadata, item)
 	if err != nil {
 		return nil, err
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/middleware"
 	"github.com/pufferpanel/pufferpanel/v3/models"
 	"github.com/pufferpanel/pufferpanel/v3/response"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"github.com/pufferpanel/pufferpanel/v3/services"
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
@@ -15,17 +16,17 @@ import (
 )
 
 func registerTemplates(g *gin.RouterGroup) {
-	g.Handle("GET", "", middleware.RequiresPermission(pufferpanel.ScopeTemplatesView), getRepos)
-	g.Handle("POST", "", middleware.RequiresPermission(pufferpanel.ScopeTemplatesRepoCreate), addRepo)
+	g.Handle("GET", "", middleware.RequiresPermission(scopes.ScopeTemplatesView), getRepos)
+	g.Handle("POST", "", middleware.RequiresPermission(scopes.ScopeTemplatesRepoCreate), addRepo)
 	g.Handle("OPTIONS", "", response.CreateOptions("GET", "POST"))
 
-	g.Handle("GET", "/:repo", middleware.RequiresPermission(pufferpanel.ScopeTemplatesView), getsTemplatesForRepo)
-	g.Handle("DELETE", "/:repo", middleware.RequiresPermission(pufferpanel.ScopeTemplatesRepoDelete), deleteRepo)
+	g.Handle("GET", "/:repo", middleware.RequiresPermission(scopes.ScopeTemplatesView), getsTemplatesForRepo)
+	g.Handle("DELETE", "/:repo", middleware.RequiresPermission(scopes.ScopeTemplatesRepoDelete), deleteRepo)
 	g.Handle("OPTIONS", "/:repo", response.CreateOptions("GET", "PUT", "DELETE"))
 
-	g.Handle("GET", "/:repo/:name", middleware.RequiresPermission(pufferpanel.ScopeTemplatesView), getTemplateFromRepo)
-	g.Handle("DELETE", "/0/:name", middleware.RequiresPermission(pufferpanel.ScopeTemplatesLocalEdit), deleteTemplate)
-	g.Handle("PUT", "/0/:name", middleware.RequiresPermission(pufferpanel.ScopeTemplatesLocalEdit), putTemplate)
+	g.Handle("GET", "/:repo/:name", middleware.RequiresPermission(scopes.ScopeTemplatesView), getTemplateFromRepo)
+	g.Handle("DELETE", "/0/:name", middleware.RequiresPermission(scopes.ScopeTemplatesLocalEdit), deleteTemplate)
+	g.Handle("PUT", "/0/:name", middleware.RequiresPermission(scopes.ScopeTemplatesLocalEdit), putTemplate)
 	g.Handle("OPTIONS", "/:repo/:name", response.CreateOptions("GET"))
 	g.Handle("OPTIONS", "/0/:name", response.CreateOptions("GET", "DELETE", "PUT"))
 }

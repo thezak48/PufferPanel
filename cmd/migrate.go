@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/mattn/go-sqlite3"
-	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/database"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/spf13/cobra"
 	"io"
 	"os"
@@ -96,7 +96,7 @@ func copyDatabaseFile(src, dest string) error {
 	if err != nil {
 		return err
 	}
-	defer pufferpanel.Close(source)
+	defer utils.Close(source)
 
 	err = os.MkdirAll(filepath.Dir(dest), 0750)
 	if err != nil {
@@ -106,7 +106,7 @@ func copyDatabaseFile(src, dest string) error {
 	if err != nil {
 		return err
 	}
-	defer pufferpanel.Close(destination)
+	defer utils.Close(destination)
 	_, err = io.Copy(destination, source)
 	return err
 }

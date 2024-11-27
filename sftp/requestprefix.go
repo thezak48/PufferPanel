@@ -3,17 +3,17 @@ package sftp
 import (
 	"fmt"
 	"github.com/pkg/sftp"
-	"github.com/pufferpanel/pufferpanel/v3"
+	"github.com/pufferpanel/pufferpanel/v3/files"
 	"io"
 	"os"
 	"path/filepath"
 )
 
 type requestPrefix struct {
-	fs pufferpanel.FileServer
+	fs files.FileServer
 }
 
-func CreateRequestPrefix(fs pufferpanel.FileServer) sftp.Handlers {
+func CreateRequestPrefix(fs files.FileServer) sftp.Handlers {
 	h := requestPrefix{fs: fs}
 
 	return sftp.Handlers{FileCmd: h, FileGet: h, FileList: h, FilePut: h}
@@ -144,7 +144,7 @@ func (rp requestPrefix) getFile(path string, flags int, mode os.FileMode) (*os.F
 
 type listerat []os.FileInfo
 
-func toListerAt(fs pufferpanel.FileServer, root string, entries []os.DirEntry) listerat {
+func toListerAt(fs files.FileServer, root string, entries []os.DirEntry) listerat {
 	result := listerat{}
 
 	for _, v := range entries {

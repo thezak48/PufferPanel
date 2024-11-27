@@ -8,6 +8,7 @@ import (
 	"github.com/creack/pty"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/shirou/gopsutil/process"
 	"github.com/spf13/cast"
 	"io"
@@ -110,7 +111,7 @@ func (t *tty) GetStats() (*pufferpanel.ServerStats, error) {
 		}
 
 		if t.Server.Stats.Type == "jcmd" {
-			stats.Jvm = &pufferpanel.JvmStats{}
+			stats.Jvm = &utils.JvmStats{}
 		}
 
 		return stats, nil
@@ -155,11 +156,11 @@ func (t *tty) GetStats() (*pufferpanel.ServerStats, error) {
 					logging.Error.Printf("Could not get result of JCMD: %s", err.Error())
 				}
 
-				stats.Jvm = pufferpanel.ParseJCMDResponse(jcmdData)
+				stats.Jvm = utils.ParseJCMDResponse(jcmdData)
 			}
 		}
 		if stats.Jvm == nil {
-			stats.Jvm = &pufferpanel.JvmStats{}
+			stats.Jvm = &utils.JvmStats{}
 		}
 	}
 

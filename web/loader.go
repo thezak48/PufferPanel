@@ -6,9 +6,9 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/client/frontend/dist"
 	"github.com/pufferpanel/pufferpanel/v3/config"
+	"github.com/pufferpanel/pufferpanel/v3/files"
 	"github.com/pufferpanel/pufferpanel/v3/middleware"
 	"github.com/pufferpanel/pufferpanel/v3/web/api"
 	"github.com/pufferpanel/pufferpanel/v3/web/auth"
@@ -116,7 +116,7 @@ func RegisterRoutes(e *gin.Engine) {
 
 		clientFiles = dist.ClientFiles
 		if config.WebRoot.Value() != "" {
-			clientFiles = pufferpanel.NewMergedFS(os.DirFS(config.WebRoot.Value()), clientFiles)
+			clientFiles = files.NewMergedFS(os.DirFS(config.WebRoot.Value()), clientFiles)
 		}
 
 		css := e.Group("/css")

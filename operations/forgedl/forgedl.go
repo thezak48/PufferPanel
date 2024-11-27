@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/pufferpanel/pufferpanel/v3"
+	"github.com/pufferpanel/pufferpanel/v3/files"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"path"
 	"strings"
 )
@@ -53,7 +55,7 @@ func (op ForgeDl) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationRes
 	}
 
 	//copy from the cache
-	err = pufferpanel.CopyFile(localFile, path.Join(env.GetRootDirectory(), op.Filename))
+	err = files.CopyFile(localFile, path.Join(env.GetRootDirectory(), op.Filename))
 	if err != nil {
 		return pufferpanel.OperationResult{Error: err}
 	}
@@ -65,7 +67,7 @@ func (op ForgeDl) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationRes
 
 func getLatestForMCVersion(minecraftVersion string) (string, error) {
 	response, err := pufferpanel.HttpGet(PromoUrl)
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if err != nil {
 		return "", err
 	}

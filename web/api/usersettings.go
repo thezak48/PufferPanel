@@ -6,13 +6,14 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/middleware"
 	"github.com/pufferpanel/pufferpanel/v3/models"
 	"github.com/pufferpanel/pufferpanel/v3/response"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"github.com/pufferpanel/pufferpanel/v3/services"
 	"net/http"
 )
 
 func registerUserSettings(g *gin.RouterGroup) {
-	g.Handle("GET", "", middleware.RequiresPermission(pufferpanel.ScopeLogin), getUserSettings)
-	g.Handle("PUT", "/:key", middleware.RequiresPermission(pufferpanel.ScopeLogin), setUserSetting)
+	g.Handle("GET", "", middleware.RequiresPermission(scopes.ScopeLogin), getUserSettings)
+	g.Handle("PUT", "/:key", middleware.RequiresPermission(scopes.ScopeLogin), setUserSetting)
 	g.Handle("OPTIONS", "", response.CreateOptions("GET", "PUT"))
 }
 

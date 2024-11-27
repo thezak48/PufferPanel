@@ -2,6 +2,7 @@ package command
 
 import (
 	"github.com/pufferpanel/pufferpanel/v3"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/spf13/cast"
 )
 
@@ -14,7 +15,7 @@ func (of OperationFactory) Create(op pufferpanel.CreateOperation) (pufferpanel.O
 
 	var stdIn pufferpanel.StdinConsoleConfiguration
 	if field, exists := op.OperationArgs["stdin"]; exists {
-		err := pufferpanel.UnmarshalTo(field, stdIn)
+		err := utils.UnmarshalTo(field, stdIn)
 		if err != nil {
 			return nil, err
 		}

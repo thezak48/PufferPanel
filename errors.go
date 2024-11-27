@@ -2,6 +2,8 @@ package pufferpanel
 
 import (
 	"errors"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"runtime/debug"
 	"strings"
 
@@ -50,7 +52,7 @@ var ErrRepoExists = CreateError("repo already exists with given name", "ErrRepoE
 var ErrEnvironmentNotSupported = CreateError("environment not supported", "ErrEnvironmentNotSupported")
 var ErrPasswordRequirements = CreateError("password does not meet requirements", "ErrPasswordRequirements")
 
-func CreateErrMissingScope(scope Scope) *Error {
+func CreateErrMissingScope(scope scopes.Scope) *Error {
 	return CreateError(ErrMissingScope.Message, ErrMissingScope.Code).Metadata(map[string]interface{}{"scope": scope})
 }
 
@@ -160,7 +162,7 @@ type Error struct {
 } //@name Error
 
 func (ge *Error) GetMessage() string {
-	return ReplaceTokens(ge.Message, ge.Meta)
+	return utils.ReplaceTokens(ge.Message, ge.Meta)
 }
 
 func (ge *Error) GetCode() string {
@@ -203,7 +205,7 @@ func FromError(err error) *Error {
 func Recover() {
 	if err := recover(); err != nil {
 		if _, ok := err.(error); !ok {
-			err = errors.New(ToString(err))
+			err = errors.New(utils.ToString(err))
 		}
 
 		logging.Error.Printf("CRITICAL ERROR: \n%+v\n%s", err, debug.Stack())

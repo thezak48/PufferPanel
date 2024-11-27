@@ -9,7 +9,9 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/middleware"
 	"github.com/pufferpanel/pufferpanel/v3/models"
 	"github.com/pufferpanel/pufferpanel/v3/response"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"github.com/pufferpanel/pufferpanel/v3/services"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/pufferpanel/pufferpanel/v3/web/daemon"
 	"net/http"
 	"strconv"
@@ -17,19 +19,19 @@ import (
 )
 
 func registerNodes(g *gin.RouterGroup) {
-	g.Handle("GET", "", middleware.RequiresPermission(pufferpanel.ScopeNodesView), getAllNodes)
-	g.Handle("POST", "", middleware.RequiresPermission(pufferpanel.ScopeNodesCreate), createNode)
+	g.Handle("GET", "", middleware.RequiresPermission(scopes.ScopeNodesView), getAllNodes)
+	g.Handle("POST", "", middleware.RequiresPermission(scopes.ScopeNodesCreate), createNode)
 	g.Handle("OPTIONS", "", response.CreateOptions("GET", "POST"))
 
-	g.Handle("GET", "/:id", middleware.RequiresPermission(pufferpanel.ScopeNodesView), getNode)
-	g.Handle("PUT", "/:id", middleware.RequiresPermission(pufferpanel.ScopeNodesEdit), updateNode)
-	g.Handle("DELETE", "/:id", middleware.RequiresPermission(pufferpanel.ScopeNodesDelete), deleteNode)
+	g.Handle("GET", "/:id", middleware.RequiresPermission(scopes.ScopeNodesView), getNode)
+	g.Handle("PUT", "/:id", middleware.RequiresPermission(scopes.ScopeNodesEdit), updateNode)
+	g.Handle("DELETE", "/:id", middleware.RequiresPermission(scopes.ScopeNodesDelete), deleteNode)
 	g.Handle("OPTIONS", "/:id", response.CreateOptions("PUT", "GET", "DELETE"))
 
-	g.Handle("GET", "/:id/features", middleware.RequiresPermission(pufferpanel.ScopeNodesView), getFeatures)
+	g.Handle("GET", "/:id/features", middleware.RequiresPermission(scopes.ScopeNodesView), getFeatures)
 	g.Handle("OPTIONS", "/:id/features", response.CreateOptions("GET"))
 
-	g.Handle("GET", "/:id/deployment", middleware.RequiresPermission(pufferpanel.ScopeNodesDeploy), deployNode)
+	g.Handle("GET", "/:id/deployment", middleware.RequiresPermission(scopes.ScopeNodesDeploy), deployNode)
 	g.Handle("OPTIONS", "/:id/deployment", response.CreateOptions("GET"))
 }
 
@@ -262,7 +264,7 @@ func getFeatures(c *gin.Context) {
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
-	defer pufferpanel.CloseResponse(res)
+	defer utils.CloseResponse(res)
 
 	features := &daemon.Features{}
 	err = json.NewDecoder(res.Body).Decode(&features)

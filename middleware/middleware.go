@@ -3,12 +3,13 @@ package middleware
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
 	"github.com/pufferpanel/pufferpanel/v3/models"
 	"github.com/pufferpanel/pufferpanel/v3/response"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"github.com/pufferpanel/pufferpanel/v3/servers"
 	"github.com/pufferpanel/pufferpanel/v3/services"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -18,7 +19,7 @@ func ResponseAndRecover(c *gin.Context) {
 	defer func() {
 		if err := recover(); err != nil {
 			if _, ok := err.(error); !ok {
-				err = errors.New(pufferpanel.ToString(err))
+				err = errors.New(utils.ToString(err))
 			}
 			response.HandleError(c, err.(error), http.StatusInternalServerError)
 
@@ -41,13 +42,13 @@ func Recover(c *gin.Context) {
 	c.Next()
 }
 
-func RequiresPermission(perm *pufferpanel.Scope) gin.HandlerFunc {
+func RequiresPermission(perm *scopes.Scope) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requiresPermission(c, perm)
 	}
 }
 
-func requiresPermission(c *gin.Context, perm *pufferpanel.Scope) {
+func requiresPermission(c *gin.Context, perm *scopes.Scope) {
 	//fail-safe in the event something pukes, we don't end up accidentally giving rights to something they should not
 	actuallyFinished := false
 	defer func() {
@@ -99,9 +100,9 @@ func requiresPermission(c *gin.Context, perm *pufferpanel.Scope) {
 	}
 
 	allowed := false
-	scopes := make([]*pufferpanel.Scope, 0)
+	allScopes := make([]*scopes.Scope, 0)
 	for _, p := range perms {
-		if pufferpanel.ContainsScope(p.Scopes, perm) {
+		if scopes.ContainsScope(p.Scopes, perm) {
 			allowed = true
 		}
 	}
@@ -111,7 +112,7 @@ func requiresPermission(c *gin.Context, perm *pufferpanel.Scope) {
 		return
 	}
 
-	c.Set("scopes", scopes)
+	c.Set("scopes", allScopes)
 	actuallyFinished = true
 }
 

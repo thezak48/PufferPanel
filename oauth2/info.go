@@ -3,6 +3,7 @@ package oauth2
 import (
 	"encoding/json"
 	"github.com/pufferpanel/pufferpanel/v3"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"net/url"
 )
 
@@ -18,7 +19,7 @@ func GetInfo(token string, hint string) (TokenInfoResponse, error) {
 
 	request := createRequest(data)
 	response, err := pufferpanel.Http().Do(request)
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if err != nil {
 		return info, err
 	}

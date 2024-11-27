@@ -7,6 +7,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -101,11 +102,11 @@ func (op JavaDl) callAdoptiumApi() (File, error) {
 		}
 	}
 
-	url := pufferpanel.ReplaceTokens(DownloadLink, replacements)
+	url := utils.ReplaceTokens(DownloadLink, replacements)
 
 	logging.Debug.Println("Calling " + url)
 	response, err := pufferpanel.HttpGet(url)
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if err != nil {
 		return File{}, err
 	}

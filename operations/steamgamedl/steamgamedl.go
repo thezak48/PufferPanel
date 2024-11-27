@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/config"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"github.com/spf13/cast"
 	"math/rand"
 	"os"
@@ -161,13 +162,13 @@ func downloadBinaries(rootBinaryFolder string) error {
 
 func downloadMetadata(env pufferpanel.Environment) error {
 	response, err := pufferpanel.HttpGet(SteamMetadataLink)
-	defer pufferpanel.CloseResponse(response)
+	defer utils.CloseResponse(response)
 	if err != nil {
 		return err
 	}
 
 	metadataName, err := Parse(DownloadOs, response.Body)
-	pufferpanel.CloseResponse(response)
+	utils.CloseResponse(response)
 
 	if err != nil {
 		return err
@@ -178,7 +179,7 @@ func downloadMetadata(env pufferpanel.Environment) error {
 		return err
 	}
 
-	err = pufferpanel.HttpExtractZip(SteamMetadataServerLink+metadataName, filepath.Join(env.GetRootDirectory(), ".steam"))
+	err = pufferpanel.HttpExtract(SteamMetadataServerLink+metadataName, filepath.Join(env.GetRootDirectory(), ".steam"))
 	if err != nil {
 		return err
 	}
@@ -188,7 +189,7 @@ func downloadMetadata(env pufferpanel.Environment) error {
 
 func walkManifest(folder, filename string) error {
 	file, err := os.Open(filepath.Join(folder, ".manifest", filename))
-	defer pufferpanel.Close(file)
+	defer utils.Close(file)
 	if err != nil {
 		return err
 	}

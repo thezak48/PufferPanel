@@ -5,6 +5,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/database"
 	"github.com/pufferpanel/pufferpanel/v3/models"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"github.com/pufferpanel/pufferpanel/v3/services"
 	"github.com/pufferpanel/pufferpanel/v3/web/auth"
 	"github.com/stretchr/testify/assert"
@@ -43,7 +44,7 @@ func TestLogin(t *testing.T) {
 		if !assert.NoError(t, err) {
 			return
 		}
-		if !assert.Equal(t, []*pufferpanel.Scope{pufferpanel.ScopeLogin}, res.Scopes) {
+		if !assert.Equal(t, []*scopes.Scope{scopes.ScopeLogin}, res.Scopes) {
 			return
 		}
 		//ensure we sent back correct headers
@@ -73,7 +74,7 @@ func TestLogin(t *testing.T) {
 		if !assert.NoError(t, err) {
 			return
 		}
-		if !assert.Equal(t, []*pufferpanel.Scope{pufferpanel.ScopeAdmin}, res.Scopes) {
+		if !assert.Equal(t, []*scopes.Scope{scopes.ScopeAdmin}, res.Scopes) {
 			return
 		}
 		//ensure we sent back correct headers

@@ -10,6 +10,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/logging"
 	"github.com/pufferpanel/pufferpanel/v3/models"
+	"github.com/pufferpanel/pufferpanel/v3/utils"
 	"gorm.io/gorm"
 	"os"
 	"path/filepath"
@@ -253,7 +254,7 @@ func readTemplateFromDisk(name, path string) (*models.Template, error) {
 		return nil, err
 	}
 
-	defer pufferpanel.Close(file)
+	defer utils.Close(file)
 
 	template := &models.Template{
 		Name: name,

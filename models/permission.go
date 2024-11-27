@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/pufferpanel/pufferpanel/v3"
+	"github.com/pufferpanel/pufferpanel/v3/scopes"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -20,8 +20,8 @@ type Permissions struct {
 	ServerIdentifier *string `gorm:"column:server_identifier;index" json:"-"`
 	Server           Server  `gorm:"ASSOCIATION_SAVE_REFERENCE:false" json:"-" validate:"-"`
 
-	RawScopes string               `gorm:"column:scopes;not null;size:1000;default:''" json:"-" validate:"required"`
-	Scopes    []*pufferpanel.Scope `gorm:"-" json:"-"`
+	RawScopes string          `gorm:"column:scopes;not null;size:1000;default:''" json:"-" validate:"required"`
+	Scopes    []*scopes.Scope `gorm:"-" json:"-"`
 }
 
 func (p *Permissions) BeforeSave(*gorm.DB) error {
@@ -31,7 +31,7 @@ func (p *Permissions) BeforeSave(*gorm.DB) error {
 
 	if p.ServerIdentifier != nil {
 		//ensure they have the view, because we're saving them back in
-		p.Scopes = pufferpanel.AddScope(p.Scopes, pufferpanel.ScopeServerView)
+		p.Scopes = scopes.AddScope(p.Scopes, scopes.ScopeServerView)
 	}
 
 	tmp := make([]string, len(p.Scopes))
@@ -43,11 +43,11 @@ func (p *Permissions) BeforeSave(*gorm.DB) error {
 }
 
 func (p *Permissions) AfterFind(*gorm.DB) error {
-	p.Scopes = make([]*pufferpanel.Scope, 0)
+	p.Scopes = make([]*scopes.Scope, 0)
 	if p.RawScopes != "" {
 		for _, v := range strings.Split(p.RawScopes, ",") {
 			//we can just simply blindly assign it, because the checks we do are just making these strings anyways...
-			p.Scopes = append(p.Scopes, pufferpanel.GetScope(v))
+			p.Scopes = append(p.Scopes, scopes.GetScope(v))
 		}
 	}
 
