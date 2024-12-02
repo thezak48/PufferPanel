@@ -52,7 +52,7 @@ func (op JavaDl) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationResu
 		url := file.Binaries[0].Package.Link
 
 		logging.Debug.Println("Calling " + url)
-		err = pufferpanel.HttpExtract(url, rootBinaryFolder)
+		err = pufferpanel.HttpExtract(url, rootBinaryFolder, nil)
 
 		if err != nil {
 			return pufferpanel.OperationResult{Error: err}

@@ -3,6 +3,7 @@ package steamgamedl
 import (
 	"bufio"
 	"fmt"
+	"github.com/mholt/archiver/v3"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/config"
 	"github.com/pufferpanel/pufferpanel/v3/utils"
@@ -151,7 +152,7 @@ func downloadBinaries(rootBinaryFolder string) error {
 	}
 	link = strings.Replace(link, "${arch}", arch, 1)
 
-	err = pufferpanel.HttpExtract(link, filepath.Join(rootBinaryFolder, "depotdownloader"))
+	err = pufferpanel.HttpExtract(link, filepath.Join(rootBinaryFolder, "depotdownloader"), archiver.DefaultZip)
 	if err != nil {
 		return err
 	}
@@ -179,7 +180,7 @@ func downloadMetadata(env pufferpanel.Environment) error {
 		return err
 	}
 
-	err = pufferpanel.HttpExtract(SteamMetadataServerLink+metadataName, filepath.Join(env.GetRootDirectory(), ".steam"))
+	err = pufferpanel.HttpExtract(SteamMetadataServerLink+metadataName, filepath.Join(env.GetRootDirectory(), ".steam"), archiver.DefaultZip)
 	if err != nil {
 		return err
 	}
