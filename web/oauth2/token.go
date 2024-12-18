@@ -154,9 +154,19 @@ func handleTokenRequest(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, &oauth2.ErrorResponse{Error: "invalid_request", ErrorDescription: err.Error()})
 				return
 			}
+
 			if perms.ID == 0 || !scopes.ContainsScope(perms.Scopes, scopes.ScopeServerSftp) {
-				c.JSON(http.StatusBadRequest, &oauth2.ErrorResponse{Error: "invalid_request", ErrorDescription: "no access"})
-				return
+				//also grab global, in case it's an admin or it's a perm that's granted globally
+				perms, err = ps.GetForUserAndServer(user.ID, "")
+				if err != nil {
+					c.JSON(http.StatusBadRequest, &oauth2.ErrorResponse{Error: "invalid_request", ErrorDescription: err.Error()})
+					return
+				}
+
+				if perms.ID == 0 || !scopes.ContainsScope(perms.Scopes, scopes.ScopeServerSftp) {
+					c.JSON(http.StatusBadRequest, &oauth2.ErrorResponse{Error: "invalid_request", ErrorDescription: "no access"})
+					return
+				}
 			}
 
 			//validate their credentials
@@ -186,7 +196,7 @@ func handleTokenRequest(c *gin.Context) {
 			c.JSON(http.StatusOK, &oauth2.TokenResponse{
 				AccessToken: token,
 				TokenType:   "Bearer",
-				Scope:       strings.Join(mappedScopes, " "),
+				Scope:       scopes.ScopeServerSftp.String(),
 				ExpiresIn:   expiresIn,
 			})
 		}
