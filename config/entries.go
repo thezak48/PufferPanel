@@ -45,6 +45,7 @@ var BinariesFolder = asDataFolder("daemon.data.binaries", "binaries")
 var CrashLimit = asInt("daemon.data.crashLimit", 3)
 var CurseForgeKey = asString("daemon.curseforge.key", curseforgeKey)
 var DataRootFolder = asString("daemon.data.root", "")
+var DepotDownloaderVersion = asString("daemon.depotDownloader.version", "latest")
 
 var TokenPublicUrl = asString("token.public", "")
 

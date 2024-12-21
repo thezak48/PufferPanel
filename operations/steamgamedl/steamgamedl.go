@@ -11,7 +11,6 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 )
@@ -19,7 +18,6 @@ import (
 var downloader sync.Mutex
 
 const SteamMetadataServerLink = "https://media.steampowered.com/client/"
-const DownloadBaseUrl = "https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_2.7.4/"
 
 func init() {
 }
@@ -38,7 +36,7 @@ func (c SteamGameDl) Run(args pufferpanel.RunOperatorArgs) pufferpanel.Operation
 
 	rootBinaryFolder := config.BinariesFolder.Value()
 
-	err := downloadBinaries(rootBinaryFolder)
+	err := downloadDD(rootBinaryFolder, config.DepotDownloaderVersion.Value())
 	if err != nil {
 		return pufferpanel.OperationResult{Error: err}
 	}
@@ -134,31 +132,6 @@ func (c SteamGameDl) Run(args pufferpanel.RunOperatorArgs) pufferpanel.Operation
 	}
 
 	return pufferpanel.OperationResult{Error: nil}
-}
-
-func downloadBinaries(rootBinaryFolder string) error {
-	downloader.Lock()
-	defer downloader.Unlock()
-
-	fi, err := os.Stat(filepath.Join(rootBinaryFolder, "depotdownloader", DepotDownloaderBinary))
-	if err == nil && fi.Size() > 0 {
-		return nil
-	}
-
-	link := DownloadBaseUrl + AssetName
-	arch := "x64"
-	if runtime.GOOS == "arm64" {
-		arch = "arm64"
-	}
-	link = strings.Replace(link, "${arch}", arch, 1)
-
-	err = pufferpanel.HttpExtract(link, filepath.Join(rootBinaryFolder, "depotdownloader"), archiver.DefaultZip)
-	if err != nil {
-		return err
-	}
-
-	_ = os.Chmod(filepath.Join(rootBinaryFolder, "depotdownloader", DepotDownloaderBinary), 0755)
-	return nil
 }
 
 func downloadMetadata(env pufferpanel.Environment) error {
