@@ -209,26 +209,26 @@ jobs:
           }
           echo VERSION=$VERSION | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
 
-#      - name: Restore DOTNET BIN
-#        uses: actions/cache@v3
-#        id: dotnet-cache
-#        with:
-#          path: |
-#            ~\dotnet
-#          key: ${{ runner.os }}-dotnet-${{ env.DOTNET_CHANNEL }}
-#          restore-keys: |
-#            ${{ runner.os }}-dotnet-
-#
-#      - name: Restore Wix cache
-#        uses: actions/cache@v3
-#        id: wix-cache
-#        with:
-#          path: |
-#            ~\.wix
-#            ~\.dotnet
-#          key: ${{ runner.os }}-wix-${{ env.DOTNET_CHANNEL }}
-#          restore-keys: |
-#            ${{ runner.os }}-wix-
+      #      - name: Restore DOTNET BIN
+      #        uses: actions/cache@v3
+      #        id: dotnet-cache
+      #        with:
+      #          path: |
+      #            ~\dotnet
+      #          key: ${{ runner.os }}-dotnet-${{ env.DOTNET_CHANNEL }}
+      #          restore-keys: |
+      #            ${{ runner.os }}-dotnet-
+      #
+      #      - name: Restore Wix cache
+      #        uses: actions/cache@v3
+      #        id: wix-cache
+      #        with:
+      #          path: |
+      #            ~\.wix
+      #            ~\.dotnet
+      #          key: ${{ runner.os }}-wix-${{ env.DOTNET_CHANNEL }}
+      #          restore-keys: |
+      #            ${{ runner.os }}-wix-
 
       - name: Prepare .NET
         #if: steps.dotnet-cache.outputs.cache-hit != 'true'
@@ -542,8 +542,14 @@ jobs:
     permissions:
       contents: read
       packages: write
+    environment: ${{ startsWith(github.ref, 'refs/tags/') && 'Release' || 'Development' }}
 
     timeout-minutes: 10
+
+    env:
+      REGISTRY: ${{ vars.REGISTRY != 'docker.com' && vars.REGISTRY || '' }}
+      REGISTRY_USERNAME: ${{ vars.REGISTRY == 'ghcr.io' && github.actor || secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ vars.REGISTRY == 'ghcr.io' && secrets.GITHUB_TOKEN || secrets.REGISTRY_PASSWORD }}
 
     steps:
       - name: Get the version
@@ -553,27 +559,37 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
 
-      - name: Set up Docker BuildKit
+      - name: Ensure mask
+        id: values
         run: |
-          echo "DOCKER_BUILDKIT=1" >> $GITHUB_ENV
-
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
+          echo "::add-mask::$REGISTRY_USERNAME"
+          echo "::add-mask::$REGISTRY_PASSWORD"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+
+      - name: Login to DockerHub
+        if: env.REGISTRY_USERNAME != '' && env.REGISTRY != ''
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ env.REGISTRY_PASSWORD }}
+
+      - name: Login to DockerHub
+        if: env.REGISTRY_USERNAME != '' && env.REGISTRY == ''
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        with:
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ env.REGISTRY_PASSWORD }}
 
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
         with:
           images: |
-            name=pufferpanel/pufferpanel
+            name=${{ vars.REGISTRY != 'docker.com' && format('{0}/', env.REGISTRY) || '' }}${{ env.IMAGE_NAME }},enable=${{ vars.REGISTRY != 'docker.com' }}
+            name=${{ env.IMAGE_NAME }},enable=${{ vars.REGISTRY == 'docker.com' }}
           flavor: |
             latest=false
           tags: |
@@ -583,13 +599,13 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
 
-      - name: Build Docker image
-        id: build
+      - name: Build and push Docker image
+        id: build-and-push
         uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
         with:
           context: .
           file: Dockerfile
-          push: false
+          push: ${{ github.event_name != 'pull_request' && env.REGISTRY_USERNAME != '' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -599,17 +615,6 @@ jobs:
             version=${{ env.VERSION }}
             curseforgeKey=${{ secrets.CURSEFORGE_KEY }}
           platforms: linux/amd64,linux/arm64
-          outputs: type=docker,dest=pufferpanel-image.tar
-
-      - name: Compress
-        run: |
-          gzip pufferpanel-image.tar
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: pufferpanel-image
-          path: pufferpanel-image.tar.gz
 
   release:
     name: "Deployment"
@@ -620,16 +625,10 @@ jobs:
       - build-windows-installer
       - build-linux-amd64-binaries
       - build-linux-arm64-binaries
-      - build-docker-image-base
     permissions:
       contents: write
     environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'Release' || 'Development' }}
     if: "github.event_name != 'pull_request'"
-
-    env:
-      REGISTRY: ${{ vars.REGISTRY != 'docker.com' && vars.REGISTRY || '' }}
-      REGISTRY_USERNAME: ${{ vars.REGISTRY == 'ghcr.io' && github.actor || secrets.REGISTRY_USERNAME }}
-      REGISTRY_PASSWORD: ${{ vars.REGISTRY == 'ghcr.io' && secrets.GITHUB_TOKEN || secrets.REGISTRY_PASSWORD }}
 
     steps:
       - uses: ruby/setup-ruby@v1
@@ -644,25 +643,13 @@ jobs:
         with:
           merge-multiple: true
 
-      - name: Load image
-        run: |
-          gunzip pufferpanel-image.tar.gz
-          docker load --input pufferpanel-image.tar
-
-      - name: Retag image
-        if: ${{ env.REGISTRY != '' }}
-        run: |
-          id=$(docker image ls --format "{{.ID}}" --filter "reference=pufferpanel*")
-          tag=$(docker image inspect --format "{{range \$k, \$v := $.RepoTags}}{{printf \$v}}{{end}}" e5b2c84ffd5a)
-          docker image tag $id ${{ env.REGISTRY }}/${{ env.REGISTRY_USERNAME }}/$tag
-
       - name: Push to repo
         env:
           PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
         run: |
           package_cloud push ${{ vars.PACKAGECLOUD_REPO }}/any/any */pufferpanel_*_amd64.deb 
           package_cloud push ${{ vars.PACKAGECLOUD_REPO }}/any/any */pufferpanel_*_arm64.deb 
-          package_cloud push ${{ vars.PACKAGECLOUD_REPO }}/rpm_any/rpm_any */pufferpanel-*.x86_64.rpm
+          package_cloud push ${{ vars.PACKAGECLOUD_REPO }}/rpm_any/rpm_any */pufferpanel-*.x86_64.rpm 
 
       - name: Create Release
         id: create_release
