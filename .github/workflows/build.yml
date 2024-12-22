@@ -128,14 +128,14 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: pufferpanel_build_artifact
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: pufferpanel_build_artifact
 
       - name: Unzip archive
         run: |
@@ -273,11 +273,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version-file: 'go.mod'
-
       - name: Download APT packages
         run: |
           sudo apt-get update
@@ -290,6 +285,11 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: pufferpanel_build_artifact
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
 
       - name: Unzip archive
         run: |
@@ -412,14 +412,14 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version-file: 'go.mod'
-
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: pufferpanel_build_artifact
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
 
       - name: Unzip archive
         run: |
