@@ -16,9 +16,8 @@ on:
       - 'client/frontend/src/lang/**.json'
 
 env:
-  SWAG_VERSION: "1.16.3"
-  GO_VERSION: "1.22"
-  NODE_VERSION: "20"
+  SWAG_VERSION: "1.16.4"
+  NODE_VERSION: "22"
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
@@ -35,50 +34,24 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+          cache-dependency-path: 'client/yarn.lock'
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: ^${{ env.GO_VERSION }}
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v3
-
-      - name: Restore yarn cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.yarn
-          key: ${{ runner.os }}-nodemodules-${{ env.NODE_VERSION }}-${{ hashFiles('client/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-nodemodules-${{ env.NODE_VERSION }}-
-
-      - name: Restore yarn cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            client/node_modules
-            client/api/node_modules
-            client/frontend/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('client/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Restore Go Modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}-
+          go-version-file: 'go.mod'
 
       - name: Restore Go BIN
-        uses: actions/cache@v3
+        id: restore-go-bin
+        uses: actions/cache@v4
         with:
           path: |
             ~/go/bin
@@ -87,15 +60,19 @@ jobs:
             ${{ runner.os }}-swag-
 
       - name: Download Go Binaries
+        if: steps.restore-go-bin.outputs.cache-hit != 'true'
         run: |
           wget https://github.com/swaggo/swag/releases/download/v${{ env.SWAG_VERSION }}/swag_${{ env.SWAG_VERSION }}_Linux_amd64.tar.gz
           mkdir -p ~/go/bin
           tar -zxf swag*.tar.gz -C ~/go/bin
           rm -rf swag*.tar.gz
 
-      - name: Generate Swagger Docs
+      - name: Download Go modules
         run: |
           go mod download
+
+      - name: Generate Swagger Docs
+        run: |
           ~/go/bin/swag init --md . -o web/swagger -g web/loader.go
 
       - name: yarn install, build
@@ -108,7 +85,7 @@ jobs:
         working-directory: client
 
       - name: Upload Swagger docs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pufferpanel_swagger
           path: |
@@ -129,7 +106,7 @@ jobs:
           zip -r pufferpanel_build_artifact.zip *
 
       - name: Generate job artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pufferpanel_build_artifact
           path: pufferpanel_build_artifact.zip
@@ -138,7 +115,7 @@ jobs:
 
   build-windows-amd64-binaries:
     name: Build Binaries - Windows AMD64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: [ 'build-shared' ]
 
     timeout-minutes: 10
@@ -152,11 +129,11 @@ jobs:
         run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: ^${{ env.GO_VERSION }}
+          go-version-file: 'go.mod'
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: pufferpanel_build_artifact
 
@@ -184,7 +161,7 @@ jobs:
           CGO_ENABLED: 1
 
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pufferpanel_${{ env.VERSION }}_windows_amd64
           path: build-artifacts/
@@ -251,20 +228,20 @@ jobs:
           wix extension add WixToolset.UI.wixext/${{ env.WIX_VERSION }}
           wix extension add WixToolset.Util.wixext/${{ env.WIX_VERSION }}
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: pufferpanel_${{ env.VERSION }}_windows_amd64
           path: binaries
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: pufferpanel_build_artifact
           path: artifacts
 
       - name: Unzip archive
         run: |
-          cd artifacts
           unzip pufferpanel_build_artifact.zip
+        working-directory: artifacts
 
       - name: Generate MSI
         run: |
@@ -276,14 +253,14 @@ jobs:
           wix build -o pufferpanel.msi -arch x64 -d ProductVersion="${{ env.VERSION }}" -d Password="$password" -ext WixToolset.Firewall.wixext -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext installer.wxs
 
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pufferpanel_${{ env.VERSION }}_installer.msi
           path: pufferpanel.msi
 
   build-linux-amd64-binaries:
     name: Build Binaries - Linux AMD64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: [ 'build-shared' ]
 
     timeout-minutes: 10
@@ -297,9 +274,9 @@ jobs:
         run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
-          go-version: ^${{ env.GO_VERSION }}
+          go-version-file: 'go.mod'
 
       - name: Download APT packages
         run: |
@@ -310,7 +287,7 @@ jobs:
         run: |
           sudo apt-get install -y rpm
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: pufferpanel_build_artifact
 
@@ -319,7 +296,7 @@ jobs:
           unzip pufferpanel_build_artifact.zip
 
       - name: Restore Go Modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
@@ -403,26 +380,26 @@ jobs:
             libstdc++.i686
 
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pufferpanel_${{ env.VERSION }}_linux_amd64
           path: build-artifacts/
 
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pufferpanel_${{ env.VERSION }}_amd64.deb
           path: pufferpanel_${{ env.VERSION }}_amd64.deb
 
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pufferpanel-${{ env.VERSION }}-1.x86_64.rpm
           path: ${{ steps.rpmamd64.outputs.file }}
 
   build-linux-arm64-binaries:
     name: Build Binaries - Linux ARM64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: [ 'build-shared' ]
 
     timeout-minutes: 10
@@ -436,9 +413,9 @@ jobs:
         run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
-          go-version: ^${{ env.GO_VERSION }}
+          go-version-file: 'go.mod'
 
       - uses: actions/download-artifact@v3
         with:
@@ -458,7 +435,7 @@ jobs:
           sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Restore Go Modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/go-build
@@ -509,36 +486,35 @@ jobs:
             lib32gcc1
 
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pufferpanel_${{ env.VERSION }}_linux_arm64
           path: build-artifacts
 
       - name: Publish Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pufferpanel_${{ env.VERSION }}_arm64.deb
           path: pufferpanel_${{ env.VERSION }}_arm64.deb
 
   cleanup:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     name: "Cleanup"
 
-    #if: ${{ always() }}
     needs: [ build-shared, build-docker-image-base, build-windows-amd64-binaries, build-windows-installer, build-linux-amd64-binaries, build-linux-arm64-binaries, release ]
 
     continue-on-error: true
 
     steps:
       - name: Delete artifacts
-        uses: geekyeggo/delete-artifact@v2
+        uses: geekyeggo/delete-artifact@v5
         with:
           name: pufferpanel_build_artifact
 
   build-docker-image-base:
     name: "Build Docker image"
     if: "startsWith(github.ref, 'refs/tags/v') || !contains(github.event.head_commit.message, '[skip]')"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -566,11 +542,11 @@ jobs:
           echo "::add-mask::$REGISTRY_PASSWORD"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.0.0
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to DockerHub
         if: env.REGISTRY_USERNAME != '' && env.REGISTRY != ''
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ env.REGISTRY_USERNAME }}
@@ -578,14 +554,14 @@ jobs:
 
       - name: Login to DockerHub
         if: env.REGISTRY_USERNAME != '' && env.REGISTRY == ''
-        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+        uses: docker/login-action@v3
         with:
           username: ${{ env.REGISTRY_USERNAME }}
           password: ${{ env.REGISTRY_PASSWORD }}
 
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
+        uses: docker/metadata-action@v5
         with:
           images: |
             name=${{ vars.REGISTRY != 'docker.com' && format('{0}/', env.REGISTRY) || '' }}${{ env.IMAGE_NAME }},enable=${{ vars.REGISTRY != 'docker.com' }}
@@ -597,11 +573,11 @@ jobs:
             type=semver,pattern={{version}}
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Build and push Docker image
         id: build-and-push
-        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile
@@ -639,7 +615,7 @@ jobs:
         run: |
           gem install --no-doc package_cloud
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
 
@@ -654,10 +630,10 @@ jobs:
       - name: Create Release
         id: create_release
         if: "startsWith(github.ref, 'refs/tags/v')"
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          draft: true
-          prerelease: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
           files: |
             pufferpanel_*_linux_amd64
             pufferpanel_*_linux_arm64
