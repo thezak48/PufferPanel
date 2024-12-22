@@ -1,7 +1,7 @@
 ###
 # Builder container
 ###
-FROM --platform=$BUILDPLATFORM node:22-alpine AS node
+FROM --platform=$BUILDPLATFORM node:20-alpine AS node
 
 WORKDIR /build
 COPY client .
