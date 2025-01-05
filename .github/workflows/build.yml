@@ -599,7 +599,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          merge-multiple: true
+          pattern: pufferpanel_*
 
       - name: Push to repo
         env:
