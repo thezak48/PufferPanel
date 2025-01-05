@@ -281,16 +281,6 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - name: Restore Go Modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}
-
       - name: Build Linux
         run: |
           go build -o build-artifacts/pufferpanel -ldflags "-X 'github.com/pufferpanel/pufferpanel/v3.Hash=${{ github.sha }}' -X 'github.com/pufferpanel/pufferpanel/v3.Version=${{ env.VERSION }}'" -v github.com/pufferpanel/pufferpanel/v3/cmd
@@ -415,16 +405,6 @@ jobs:
       - name: APT Install
         run: |
           sudo apt-get install -y gcc-aarch64-linux-gnu
-
-      - name: Restore Go Modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ env.GO_VERSION }}-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-${{ env.GO_VERSION }}
 
       - name: Build ARM64
         run: |
@@ -600,6 +580,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: pufferpanel_*
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: pufferpanel-*.rpm
 
       - name: Push to repo
         env:
