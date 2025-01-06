@@ -475,7 +475,7 @@ jobs:
 
   build-docker-image-base:
     name: "Build Docker image"
-    if: "startsWith(github.ref, 'refs/tags/v') || !contains(github.event.head_commit.message, '[skip]')"
+    if: "github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || !contains(github.event.head_commit.message, '[skip]'))"
     runs-on: ubuntu-latest
     permissions:
       contents: read
