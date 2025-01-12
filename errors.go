@@ -51,6 +51,8 @@ var ErrNoCommand = CreateError("command could not be determined", "ErrNoCommand"
 var ErrRepoExists = CreateError("repo already exists with given name", "ErrRepoExists")
 var ErrEnvironmentNotSupported = CreateError("environment not supported", "ErrEnvironmentNotSupported")
 var ErrPasswordRequirements = CreateError("password does not meet requirements", "ErrPasswordRequirements")
+var ErrBackupInProgress = CreateError("the server is currently perfoming a backup or restore, please wait for this process to be complete", "ErrBackupInProgress")
+var ErrBackupServerRunning = CreateError("the server is currently running, please stop the server before doing backup actions", "ErrBackupServerRunning")
 
 func CreateErrMissingScope(scope scopes.Scope) *Error {
 	return CreateError(ErrMissingScope.Message, ErrMissingScope.Code).Metadata(map[string]interface{}{"scope": scope})

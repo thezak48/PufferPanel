@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"encoding/json"
 	"fmt"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/mholt/archiver/v3"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/conditions"
@@ -15,6 +16,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -173,6 +175,10 @@ func (p *Server) Start() error {
 			err = pufferpanel.ErrServerRunning
 		}
 		return err
+	}
+
+	if p.GetEnvironment().IsBackingUp() {
+		return pufferpanel.ErrBackupInProgress
 	}
 
 	p.Log(logging.Info, "Starting server %s", p.Id())
@@ -353,6 +359,10 @@ func (p *Server) Destroy() (err error) {
 }
 
 func (p *Server) Install() error {
+	if p.GetEnvironment().IsBackingUp() {
+		return pufferpanel.ErrBackupInProgress
+	}
+
 	if p.GetEnvironment().IsInstalling() {
 		return nil
 	}
@@ -599,6 +609,138 @@ func (p *Server) ArchiveItems(sourceFiles []string, destination string) error {
 
 func (p *Server) Extract(source, destination string) error {
 	return files.Extract(p.GetFileServer(), source, destination, "*", false, nil)
+}
+
+func (p *Server) CreateBackup() (string, int64, error) {
+	sourceFiles := []string{p.GetFileServer().Prefix()}
+
+	backupDirectory := p.RunningEnvironment.GetBackupDirectory()
+	if backupDirectory == "" {
+		return "", 0, pufferpanel.ErrSettingNotConfigured("backupDirectory")
+	}
+
+	if p.GetEnvironment().IsBackingUp() {
+		return "", 0, pufferpanel.ErrBackupInProgress
+	}
+
+	p.GetEnvironment().SetBackingUp(true)
+	defer p.GetEnvironment().SetBackingUp(false)
+
+	_, err := os.Stat(backupDirectory)
+	if err != nil && os.IsNotExist(err) {
+		err = os.Mkdir(backupDirectory, 0755)
+		if err != nil && !os.IsExist(err) {
+			return "", 0, err
+		}
+	}
+
+	backupId, err := uuid.NewV4()
+	if err != nil {
+		return "", 0, err
+	}
+	backupFileName := backupId.String() + ".tar.sz"
+	backupfile := path.Join(backupDirectory, backupFileName)
+
+	err = files.Compress(nil, backupfile, sourceFiles)
+	if err != nil {
+		return "", 0, err
+	}
+
+	file, err := os.Stat(backupfile)
+	if err != nil {
+		return "", 0, err
+	}
+
+	fileSize := file.Size()
+	return backupFileName, fileSize, err
+}
+
+func (p *Server) DeleteBackup(fileName string) error {
+	backupDirectory := p.RunningEnvironment.GetBackupDirectory()
+	if backupDirectory == "" {
+		return pufferpanel.ErrSettingNotConfigured("backupDirectory")
+	}
+
+	if p.GetEnvironment().IsBackingUp() {
+		return pufferpanel.ErrBackupInProgress
+	}
+
+	p.GetEnvironment().SetBackingUp(true)
+	defer p.GetEnvironment().SetBackingUp(false)
+
+	backupfile := path.Join(backupDirectory, fileName)
+
+	err := os.Remove(backupfile)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Server) RestoreBackup(fileName string) error {
+	backupDirectory := p.RunningEnvironment.GetBackupDirectory()
+	if backupDirectory == "" {
+		return pufferpanel.ErrSettingNotConfigured("backupDirectory")
+	}
+
+	if p.GetEnvironment().IsBackingUp() {
+		return pufferpanel.ErrBackupInProgress
+	}
+
+	p.GetEnvironment().SetBackingUp(true)
+	defer p.GetEnvironment().SetBackingUp(false)
+
+	backupfile := path.Join(backupDirectory, fileName)
+
+	_, err := os.Stat(backupfile)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	serverfolder := p.GetFileServer().Prefix()
+
+	//Check if any files exist, as remove all errors if its empty
+	existingFiles, err := p.GetFileServer().Glob("*")
+	if err != nil {
+		return err
+	}
+
+	for _, existingFile := range existingFiles {
+		file, err := p.GetFileServer().Stat(existingFile)
+		if file.IsDir() {
+			err = p.GetFileServer().RemoveAll(existingFile)
+		} else {
+			p.GetFileServer().Remove(existingFile)
+		}
+		if err != nil {
+			logging.Info.Printf("failed to delete %s", err)
+			return err
+		}
+	}
+
+	return files.Extract(nil, backupfile, serverfolder, "*", true, nil)
+}
+
+func (p *Server) GetBackupFile(fileName string) (*FileData, error) {
+	backupDirectory := p.RunningEnvironment.GetBackupDirectory()
+	if backupDirectory == "" {
+		return nil, pufferpanel.ErrSettingNotConfigured("backupDirectory")
+	}
+
+	backupfile := path.Join(backupDirectory, fileName)
+
+	info, err := os.Stat(backupfile)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	file, err := os.Open(backupfile)
+
+	if err != nil {
+		return nil, err
+	}
+	return &FileData{Contents: file, ContentLength: info.Size(), Name: info.Name()}, nil
 }
 
 func (p *Server) valid() bool {

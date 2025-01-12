@@ -97,6 +97,11 @@ func RegisterServerRoutes(e *gin.RouterGroup) {
 		l.POST("/:serverId/archive/*filename", middleware.ResolveServerNode, archive)
 		l.POST("/:serverId/extract/*filename", middleware.ResolveServerNode, extract)
 
+		l.POST("/:serverId/backup/create", middleware.ResolveServerNode, createBackup)
+		l.DELETE("/:serverId/backup", middleware.ResolveServerNode, deleteBackup)
+		l.POST("/:serverId/backup/restore", middleware.ResolveServerNode, restoreBackup)
+		l.GET("/:serverId/backup/download", middleware.ResolveServerNode, downloadBackup)
+
 		l.HEAD("/:serverId/query", middleware.ResolveServerNode, canQueryServer)
 		l.GET("/:serverId/query", middleware.ResolveServerNode, queryServer)
 
@@ -812,6 +817,115 @@ func extract(c *gin.Context) {
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {
 		c.Status(http.StatusNoContent)
+	}
+}
+
+// @Summary Create backup
+// @Description Creates a full backup of the server
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Router /api/servers/{id}/backup/create [post]
+// @Security OAuth2Application[server.backup.create]
+func createBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	isRunning, err := server.IsRunning()
+	if err != nil {
+		response.HandleError(c, err, http.StatusInternalServerError)
+		return
+	} else if isRunning {
+		response.HandleError(c, pufferpanel.ErrBackupServerRunning, http.StatusBadRequest)
+		return
+	}
+
+	backupFileName, fileSize, err := server.CreateBackup()
+
+	pufferError, ispufferError := err.(*pufferpanel.Error)
+	if ispufferError && pufferpanel.ErrBackupInProgress.Is(pufferError) {
+		response.HandleError(c, err, http.StatusBadRequest)
+	} else if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		c.JSON(http.StatusOK, &pufferpanel.ServerBackupResponse{BackupFileName: backupFileName, FileSize: fileSize})
+	}
+}
+
+// @Summary Delete backup
+// @Description Delete a backup of the server
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param fileName query string true "File Name"
+// @Router /api/servers/{id}/backup/delete [post]
+// @Security OAuth2Application[server.backup.delete]
+func deleteBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	fileName := c.Query("fileName")
+
+	err := server.DeleteBackup(fileName)
+
+	pufferError, ispufferError := err.(*pufferpanel.Error)
+	if ispufferError && pufferpanel.ErrBackupInProgress.Is(pufferError) {
+		response.HandleError(c, err, http.StatusBadRequest)
+	} else if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		c.Status(http.StatusNoContent)
+	}
+}
+
+// @Summary Restore backup
+// @Description Restore a full backup of the server
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param fileName query string true "File Name"
+// @Router /api/servers/{id}/backup/restore [post]
+// @Security OAuth2Application[server.backup.restore]
+func restoreBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	fileName := c.Query("fileName")
+	isRunning, err := server.IsRunning()
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	} else if isRunning {
+		response.HandleError(c, pufferpanel.ErrBackupServerRunning, http.StatusBadRequest)
+		return
+	}
+
+	err = server.RestoreBackup(fileName)
+
+	pufferError, ispufferError := err.(*pufferpanel.Error)
+	if ispufferError && pufferpanel.ErrBackupInProgress.Is(pufferError) {
+		response.HandleError(c, err, http.StatusBadRequest)
+	} else if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		c.Status(http.StatusNoContent)
+	}
+}
+
+// @Summary Download backup
+// @Description Download a backup of the server
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param fileName query string true "File Name"
+// @Router /api/servers/{id}/backup/restore [post]
+// @Security OAuth2Application[server.backup.restore]
+func downloadBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	fileName := c.Query("fileName")
+
+	data, err := server.GetBackupFile(fileName)
+	defer func() {
+		if data != nil {
+			utils.Close(data.Contents)
+		}
+	}()
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		fileName := filepath.Base(data.Name)
+
+		extraHeaders := map[string]string{
+			"Content-Disposition": fmt.Sprintf(`attachment; filename="%s"`, fileName),
+		}
+
+		//discard the built-in response, we cannot use this one at all
+		c.DataFromReader(http.StatusOK, data.ContentLength, "application/octet-stream", data.Contents, extraHeaders)
 	}
 }
 

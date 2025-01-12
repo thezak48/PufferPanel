@@ -235,6 +235,30 @@ export class ServerApi {
     return true
   }
 
+  async getBackups(id) {
+    const res = await this._api.get(`/api/servers/${id}/backup`)
+    return res.data
+  }
+
+  async createBackup(id, name) {
+    await this._api.post(`/api/servers/${id}/backup/create`, undefined, { name })
+    return true
+  }
+
+  async deleteBackup(id, backupId) {
+    await this._api.delete(`/api/servers/${id}/backup/${backupId}`)
+    return true
+  }
+
+  async restoreBackup(id, backupId) {
+    await this._api.post(`/api/servers/${id}/backup/restore/${backupId}`)
+    return true
+  }
+
+  getBackupUrl (id,backupId) {
+    return `/api/servers/${id}/backup/download/${backupId}`
+  }
+
   async deleteFile(id, path) {
     if (path.indexOf('/') === 0) path = path.substring(1)
     await this._api.delete(this.getFileUrl(id, path))
@@ -504,6 +528,26 @@ class Server {
 
   async extractFile(path, destination) {
     return await this._api.server.extractFile(this.id, path, destination)
+  }
+
+  async getBackups(){
+    return await this._api.server.getBackups(this.id)
+  }
+
+  async createBackup(name){
+    return await this._api.server.createBackup(this.id, name)
+  }
+
+  async deleteBackup(backupId){
+    return await this._api.server.deleteBackup(this.id, backupId)
+  }
+
+  async restoreBackup(backupId){
+    return await this._api.server.restoreBackup(this.id, backupId)
+  }
+
+   getBackupUrl(backupId){
+    return this._api.server.getBackupUrl(this.id, backupId)
   }
 
   async deleteFile(path) {

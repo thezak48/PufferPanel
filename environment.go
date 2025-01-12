@@ -40,11 +40,17 @@ type Environment interface {
 
 	SetInstalling(bool)
 
+	IsBackingUp() bool
+
+	SetBackingUp(bool)
+
 	WaitForMainProcess() error
 
 	WaitForMainProcessFor(timeout time.Duration) error
 
 	GetRootDirectory() string
+
+	GetBackupDirectory() string
 
 	GetConsole() (console []byte, epoch int64)
 
@@ -81,6 +87,7 @@ type BaseEnvironment struct {
 	Environment
 	Type              string               `json:"type"`
 	RootDirectory     string               `json:"root,omitempty"`
+	BackupDirectory   string               `json:"-"`
 	ConsoleBuffer     *MemoryCache         `json:"-"`
 	Wait              *sync.WaitGroup      `json:"-"`
 	ExecutionFunction ExecutionFunction    `json:"-"`
@@ -91,6 +98,7 @@ type BaseEnvironment struct {
 	StatusTracker     *Tracker             `json:"-"`
 	StatsTracker      *Tracker             `json:"-"`
 	Installing        bool                 `json:"-"`
+	BackingUp         bool                 `json:"-"`
 	IsRunningFunc     func() (bool, error) `json:"-"`
 	KillFunc          func() error         `json:"-"`
 	Console           Console              `json:"-"`
@@ -160,6 +168,10 @@ func (e *BaseEnvironment) CreateConsoleStdinProxy(config StdinConsoleConfigurati
 
 func (e *BaseEnvironment) GetRootDirectory() string {
 	return e.RootDirectory
+}
+
+func (e *BaseEnvironment) GetBackupDirectory() string {
+	return e.BackupDirectory
 }
 
 func (e *BaseEnvironment) GetConsole() (console []byte, epoch int64) {
@@ -282,6 +294,14 @@ func (e *BaseEnvironment) SetInstalling(flag bool) {
 		},
 		Type: MessageTypeStatus,
 	})
+}
+
+func (e *BaseEnvironment) IsBackingUp() bool {
+	return e.BackingUp
+}
+
+func (e *BaseEnvironment) SetBackingUp(flag bool) {
+	e.BackingUp = flag
 }
 
 func (e *BaseEnvironment) ExecuteInMainProcess(cmd string) (err error) {

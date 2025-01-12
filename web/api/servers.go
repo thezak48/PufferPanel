@@ -110,6 +110,18 @@ func registerServers(g *gin.RouterGroup) {
 	g.POST("/:serverId/extract/*filename", middleware.RequiresPermission(scopes.ScopeServerFileEdit), middleware.ResolveServerPanel, proxyServerRequest)
 	g.OPTIONS("/:serverId/extract/*filename", response.CreateOptions("POST"))
 
+	g.GET("/:serverId/backup", middleware.RequiresPermission(scopes.ScopeServerBackupView), middleware.ResolveServerPanel, getBackups)
+	g.OPTIONS("/:serverId/backup", response.CreateOptions("GET"))
+	g.GET("/:serverId/backup/:backupId", middleware.RequiresPermission(scopes.ScopeServerBackupView), middleware.ResolveServerPanel, getBackup)
+	g.DELETE("/:serverId/backup/:backupId", middleware.RequiresPermission(scopes.ScopeServerBackupDelete), middleware.ResolveServerPanel, deleteBackup)
+	g.OPTIONS("/:serverId/backup/:backupId", response.CreateOptions("GET", "DELETE"))
+	g.POST("/:serverId/backup/create", middleware.RequiresPermission(scopes.ScopeServerBackupCreate), middleware.ResolveServerPanel, createBackup)
+	g.OPTIONS("/:serverId/backup/create", response.CreateOptions("POST"))
+	g.POST("/:serverId/backup/restore/:backupId", middleware.RequiresPermission(scopes.ScopeServerBackupRestore), middleware.ResolveServerPanel, restoreBackup)
+	g.OPTIONS("/:serverId/backup/restore/:backupId", response.CreateOptions("POST"))
+	g.GET("/:serverId/backup/download/:backupId", middleware.RequiresPermission(scopes.ScopeServerBackupView), middleware.ResolveServerPanel, downloadBackup)
+	g.OPTIONS("/:serverId/backup/download/:backupId", response.CreateOptions("GET"))
+
 	p := g.Group("/:serverId/socket")
 	{
 		p.GET("", middleware.RequiresPermission(scopes.ScopeServerView), cors.New(cors.Config{
@@ -978,6 +990,231 @@ func editServerDataAdmin(c *gin.Context) {
 	proxyServerRequest(c)
 }
 
+// @Summary Gets servers backups
+// @Description Gets all backups made on this server
+// @Success 200 {object} models.Backup
+// @Param id path string true "Server ID"
+// @Router /api/servers/{id}/backup [get]
+// @Security OAuth2Application[server.backup.view]
+func getBackups(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	bs := &services.Backup{DB: db}
+
+	records, err := bs.GetAllBackupsForServer(server.Identifier)
+
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		c.JSON(http.StatusOK, records)
+	}
+}
+
+// @Summary Gets a spersific backup on a server
+// @Description Gets a spersific backup made on this server
+// @Success 200 {object} models.Backup
+// @Param id path string true "Server ID"
+// @Param backupId path string true "BackupId"
+// @Router /api/servers/{id}/backup/{backupId} [get]
+// @Security OAuth2Application[server.backup.view]
+func getBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	bs := &services.Backup{DB: db}
+	backupId, err := cast.ToUintE(c.Param("backupId"))
+	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
+
+	records, err := bs.GetForSeverById(backupId, server.Identifier)
+
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+	} else {
+		c.JSON(http.StatusOK, records)
+	}
+}
+
+// @Summary Create backup
+// @Description Creates a full backup of the server
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Query name query string true "name of the backup"
+// @Router /api/servers/{id}/backup/create [post]
+// @Security OAuth2Application[server.backup.create]
+func createBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	ns := &services.Node{DB: db}
+	bs := &services.Backup{DB: db}
+	name := c.Query("name")
+	node := &server.Node
+
+	resolvedPath := "/daemon/server/" + strings.TrimPrefix(c.Request.URL.Path, "/api/servers/")
+	if c.Request.URL.RawQuery != "" {
+		resolvedPath += "?" + c.Request.URL.RawQuery
+	}
+
+	callResponse, err := ns.CallNode(node, c.Request.Method, resolvedPath, c.Request.Body, c.Request.Header)
+	if callResponse.StatusCode == http.StatusBadRequest { //If its a local node, the err will not be set, have to check the status code
+		newHeaders := cleanHttpReturnErrors(callResponse.Header)
+
+		c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
+		c.Abort()
+		return
+	}
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+
+	responseData := &pufferpanel.ServerBackupResponse{}
+	err = json.NewDecoder(callResponse.Body).Decode(responseData)
+	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
+
+	backup := &models.Backup{Name: name, FileName: responseData.BackupFileName, FileSize: responseData.FileSize, ServerID: server.Identifier}
+	err = bs.Create(backup)
+	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+// @Summary Delete backup
+// @Description Removes the backup and its assosicated file
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param backupId path string true "Backup ID"
+// @Router /api/servers/{id}/backup/Delete/{backupId} [delete]
+// @Security OAuth2Application[server.backup.delete]
+func deleteBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	ns := &services.Node{DB: db}
+	bs := &services.Backup{DB: db}
+	node := &server.Node
+
+	backupId, err := cast.ToUintE(c.Param("backupId"))
+	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
+
+	backup, err := bs.GetForSeverById(backupId, server.Identifier)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+	if backup == nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	resolvedPath := "/daemon/server/" + server.Identifier + "/backup" + "?fileName=" + backup.FileName
+
+	callResponse, err := ns.CallNode(node, "DELETE", resolvedPath, nil, nil)
+	if callResponse.StatusCode == http.StatusBadRequest { //If its a local node, the err will not be set, have to check the status code
+		newHeaders := cleanHttpReturnErrors(callResponse.Header)
+
+		c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
+		c.Abort()
+		return
+	}
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+
+	err = bs.Delete(backupId)
+	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+// @Summary Restore backup
+// @Description Removes all exisiting files and restores the server to the state of the backup
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param backupId path string true "Backup ID"
+// @Router /api/servers/{id}/backup/Delete/{backupId} [delete]
+// @Security OAuth2Application[server.backup.restore]
+func restoreBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	ns := &services.Node{DB: db}
+	bs := &services.Backup{DB: db}
+	node := &server.Node
+
+	backupId, err := cast.ToUintE(c.Param("backupId"))
+	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
+
+	backup, err := bs.GetForSeverById(backupId, server.Identifier)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+	if backup == nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	resolvedPath := "/daemon/server/" + server.Identifier + "/backup/restore" + "?fileName=" + backup.FileName
+
+	callResponse, err := ns.CallNode(node, "POST", resolvedPath, nil, nil)
+	if callResponse.StatusCode == http.StatusBadRequest { //If its a local node, the err will not be set, have to check the status code
+		newHeaders := cleanHttpReturnErrors(callResponse.Header)
+
+		c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
+		c.Abort()
+		return
+	}
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+// @Summary Download backup
+// @Description Download a server backup
+// @Success 204 {object} nil
+// @Param id path string true "Server ID"
+// @Param backupId path string true "Backup ID"
+// @Router /api/servers/{id}/backup/Delete/{backupId} [delete]
+// @Security OAuth2Application[server.backup.restore]
+func downloadBackup(c *gin.Context) {
+	server := getServerFromGin(c)
+	db := middleware.GetDatabase(c)
+	ns := &services.Node{DB: db}
+	bs := &services.Backup{DB: db}
+	node := &server.Node
+
+	backupId, err := cast.ToUintE(c.Param("backupId"))
+	if response.HandleError(c, err, http.StatusBadRequest) {
+		return
+	}
+
+	backup, err := bs.GetForSeverById(backupId, server.Identifier)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+	if backup == nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	resolvedPath := "/daemon/server/" + server.Identifier + "/backup/download" + "?fileName=" + backup.FileName
+
+	callResponse, err := ns.CallNode(node, "GET", resolvedPath, nil, nil)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+
+	newHeaders := cleanHttpReturnErrors(callResponse.Header)
+
+	c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
+}
+
 func getFromData(variables map[string]pufferpanel.Variable, key string) (result interface{}, exists bool) {
 	for k, v := range variables {
 		if k == key {
@@ -1075,9 +1312,15 @@ func proxyHttpRequest(c *gin.Context, path string, ns *services.Node, node *mode
 
 	defer utils.CloseResponse(callResponse)
 
+	newHeaders := cleanHttpReturnErrors(callResponse.Header)
+
+	c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
+}
+
+func cleanHttpReturnErrors(currentHeaders http.Header) map[string]string {
 	//Even though apache isn't going to be in place, we can't set certain headers
 	newHeaders := make(map[string]string)
-	for k, v := range callResponse.Header {
+	for k, v := range currentHeaders {
 		switch k {
 		case "Transfer-Encoding":
 		case "Content-Type":
@@ -1087,9 +1330,7 @@ func proxyHttpRequest(c *gin.Context, path string, ns *services.Node, node *mode
 			newHeaders[k] = strings.Join(v, ", ")
 		}
 	}
-
-	c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
-	c.Abort()
+	return newHeaders
 }
 
 func proxySocketRequest(c *gin.Context, path string, ns *services.Node, node *models.Node) {
