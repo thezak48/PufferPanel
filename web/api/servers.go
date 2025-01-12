@@ -422,9 +422,7 @@ func createServer(c *gin.Context) {
 	}
 
 	nodeResponse, err := ns.CallNode(node, "PUT", "/daemon/server/"+server.Identifier, io.NopCloser(reader), c.Request.Header)
-	if nodeResponse != nil {
-		defer utils.Close(nodeResponse.Body)
-	}
+	defer utils.CloseResponse(nodeResponse)
 
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
@@ -1001,7 +999,7 @@ func getBackups(c *gin.Context) {
 	db := middleware.GetDatabase(c)
 	bs := &services.Backup{DB: db}
 
-	records, err := bs.GetAllBackupsForServer(server.Identifier)
+	records, err := bs.GetAllForServer(server.Identifier)
 
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 	} else {
@@ -1009,8 +1007,8 @@ func getBackups(c *gin.Context) {
 	}
 }
 
-// @Summary Gets a spersific backup on a server
-// @Description Gets a spersific backup made on this server
+// @Summary Gets a specific backup on a server
+// @Description Gets a specific backup made on this server
 // @Success 200 {object} models.Backup
 // @Param id path string true "Server ID"
 // @Param backupId path string true "BackupId"
@@ -1025,12 +1023,12 @@ func getBackup(c *gin.Context) {
 		return
 	}
 
-	records, err := bs.GetForSeverById(backupId, server.Identifier)
-
+	records, err := bs.Get(server.Identifier, backupId)
 	if response.HandleError(c, err, http.StatusInternalServerError) {
-	} else {
-		c.JSON(http.StatusOK, records)
+		return
 	}
+
+	c.JSON(http.StatusOK, records)
 }
 
 // @Summary Create backup
@@ -1048,20 +1046,27 @@ func createBackup(c *gin.Context) {
 	name := c.Query("name")
 	node := &server.Node
 
+	if name == "" {
+		response.HandleError(c, pufferpanel.ErrFieldRequired("name"), http.StatusBadRequest)
+		return
+	}
+
 	resolvedPath := "/daemon/server/" + strings.TrimPrefix(c.Request.URL.Path, "/api/servers/")
 	if c.Request.URL.RawQuery != "" {
 		resolvedPath += "?" + c.Request.URL.RawQuery
 	}
 
 	callResponse, err := ns.CallNode(node, c.Request.Method, resolvedPath, c.Request.Body, c.Request.Header)
+	defer utils.CloseResponse(callResponse)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+
 	if callResponse.StatusCode == http.StatusBadRequest { //If its a local node, the err will not be set, have to check the status code
 		newHeaders := cleanHttpReturnErrors(callResponse.Header)
 
 		c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
 		c.Abort()
-		return
-	}
-	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1081,7 +1086,7 @@ func createBackup(c *gin.Context) {
 }
 
 // @Summary Delete backup
-// @Description Removes the backup and its assosicated file
+// @Description Removes the backup and its associated file
 // @Success 204 {object} nil
 // @Param id path string true "Server ID"
 // @Param backupId path string true "Backup ID"
@@ -1099,7 +1104,7 @@ func deleteBackup(c *gin.Context) {
 		return
 	}
 
-	backup, err := bs.GetForSeverById(backupId, server.Identifier)
+	backup, err := bs.Get(server.Identifier, backupId)
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
@@ -1111,14 +1116,16 @@ func deleteBackup(c *gin.Context) {
 	resolvedPath := "/daemon/server/" + server.Identifier + "/backup" + "?fileName=" + backup.FileName
 
 	callResponse, err := ns.CallNode(node, "DELETE", resolvedPath, nil, nil)
+	defer utils.CloseResponse(callResponse)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+
 	if callResponse.StatusCode == http.StatusBadRequest { //If its a local node, the err will not be set, have to check the status code
 		newHeaders := cleanHttpReturnErrors(callResponse.Header)
 
 		c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
 		c.Abort()
-		return
-	}
-	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1149,7 +1156,7 @@ func restoreBackup(c *gin.Context) {
 		return
 	}
 
-	backup, err := bs.GetForSeverById(backupId, server.Identifier)
+	backup, err := bs.Get(server.Identifier, backupId)
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
@@ -1161,14 +1168,16 @@ func restoreBackup(c *gin.Context) {
 	resolvedPath := "/daemon/server/" + server.Identifier + "/backup/restore" + "?fileName=" + backup.FileName
 
 	callResponse, err := ns.CallNode(node, "POST", resolvedPath, nil, nil)
+	defer utils.CloseResponse(callResponse)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
+	}
+
 	if callResponse.StatusCode == http.StatusBadRequest { //If its a local node, the err will not be set, have to check the status code
 		newHeaders := cleanHttpReturnErrors(callResponse.Header)
 
 		c.DataFromReader(callResponse.StatusCode, callResponse.ContentLength, callResponse.Header.Get("Content-Type"), callResponse.Body, newHeaders)
 		c.Abort()
-		return
-	}
-	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
 
@@ -1194,7 +1203,7 @@ func downloadBackup(c *gin.Context) {
 		return
 	}
 
-	backup, err := bs.GetForSeverById(backupId, server.Identifier)
+	backup, err := bs.Get(server.Identifier, backupId)
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}
@@ -1206,6 +1215,7 @@ func downloadBackup(c *gin.Context) {
 	resolvedPath := "/daemon/server/" + server.Identifier + "/backup/download" + "?fileName=" + backup.FileName
 
 	callResponse, err := ns.CallNode(node, "GET", resolvedPath, nil, nil)
+	defer utils.CloseResponse(callResponse)
 	if response.HandleError(c, err, http.StatusInternalServerError) {
 		return
 	}

@@ -839,7 +839,8 @@ func createBackup(c *gin.Context) {
 
 	backupFileName, fileSize, err := server.CreateBackup()
 
-	pufferError, ispufferError := err.(*pufferpanel.Error)
+	var pufferError *pufferpanel.Error
+	ispufferError := errors.As(err, &pufferError)
 	if ispufferError && pufferpanel.ErrBackupInProgress.Is(pufferError) {
 		response.HandleError(c, err, http.StatusBadRequest)
 	} else if response.HandleError(c, err, http.StatusInternalServerError) {
@@ -861,7 +862,8 @@ func deleteBackup(c *gin.Context) {
 
 	err := server.DeleteBackup(fileName)
 
-	pufferError, ispufferError := err.(*pufferpanel.Error)
+	var pufferError *pufferpanel.Error
+	ispufferError := errors.As(err, &pufferError)
 	if ispufferError && pufferpanel.ErrBackupInProgress.Is(pufferError) {
 		response.HandleError(c, err, http.StatusBadRequest)
 	} else if response.HandleError(c, err, http.StatusInternalServerError) {

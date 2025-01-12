@@ -612,7 +612,7 @@ func (p *Server) Extract(source, destination string) error {
 }
 
 func (p *Server) CreateBackup() (string, int64, error) {
-	sourceFiles := []string{p.GetFileServer().Prefix()}
+	sourceFiles := []string{filepath.Join(p.GetFileServer().Prefix())}
 
 	backupDirectory := p.RunningEnvironment.GetBackupDirectory()
 	if backupDirectory == "" {
@@ -628,7 +628,7 @@ func (p *Server) CreateBackup() (string, int64, error) {
 
 	_, err := os.Stat(backupDirectory)
 	if err != nil && os.IsNotExist(err) {
-		err = os.Mkdir(backupDirectory, 0755)
+		err = os.MkdirAll(backupDirectory, 0755)
 		if err != nil && !os.IsExist(err) {
 			return "", 0, err
 		}
@@ -638,7 +638,7 @@ func (p *Server) CreateBackup() (string, int64, error) {
 	if err != nil {
 		return "", 0, err
 	}
-	backupFileName := backupId.String() + ".tar.sz"
+	backupFileName := backupId.String() + ".tar.gz"
 	backupfile := path.Join(backupDirectory, backupFileName)
 
 	err = files.Compress(nil, backupfile, sourceFiles)

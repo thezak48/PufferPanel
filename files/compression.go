@@ -73,6 +73,10 @@ func Extract(fs FileServer, sourceFile, targetPath, filter string, skipRoot bool
 }
 
 func Compress(fs FileServer, targetFile string, files []string) error {
+	if len(files) == 0 {
+		return errors.New("no files to compress")
+	}
+
 	if fs != nil {
 		p := fs.Prefix()
 

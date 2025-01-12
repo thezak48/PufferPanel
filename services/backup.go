@@ -10,55 +10,28 @@ type Backup struct {
 	DB *gorm.DB
 }
 
-func (bs *Backup) GetAllBackupsForServer(serverID string) ([]*models.Backup, error) {
+func (bs *Backup) GetAllForServer(serverID string) ([]*models.Backup, error) {
 	var records []*models.Backup
-	query := bs.DB
-	query = query.Where(&models.Backup{ServerID: serverID})
-
-	err := query.Find(&records).Error
-	if err != nil {
-		return nil, err
-	}
-
+	err := bs.DB.Where(&models.Backup{ServerID: serverID}).Find(&records).Error
 	return records, err
 }
 
-func (bs *Backup) GetForSeverById(id uint, serverId string) (*models.Backup, error) {
+func (bs *Backup) Get(serverId string, id uint) (*models.Backup, error) {
 	var record *models.Backup
-	query := bs.DB
-	query = query.Where(&models.Backup{ID: id, ServerID: serverId})
-
-	err := query.First(&record).Error
-	if err != nil {
-		return nil, err
-	}
-
+	err := bs.DB.Where(&models.Backup{ServerID: serverId, ID: id}).First(&record).Error
 	return record, err
 }
 
 func (bs *Backup) Create(model *models.Backup) error {
-	res := bs.DB.Create(model)
-
-	if res.Error != nil {
-		return res.Error
-	}
-	return nil
+	return bs.DB.Create(model).Error
 }
 
 func (bs *Backup) Update(model *models.Backup) error {
-	res := bs.DB.Omit(clause.Associations).Save(model)
-	return res.Error
+	return bs.DB.Omit(clause.Associations).Save(model).Error
 }
 
 func (bs *Backup) Delete(id uint) error {
-	model := &models.Backup{
+	return bs.DB.Delete(&models.Backup{
 		ID: id,
-	}
-
-	err := bs.DB.Delete(model).Error
-	if err != nil {
-		return err
-	}
-
-	return nil
+	}).Error
 }
