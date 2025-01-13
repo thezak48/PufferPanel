@@ -37,6 +37,7 @@ function saveDefinition() {
   editorOpen.value = false
   const edited = JSON.parse(edit.value)
   props.server.updateDefinition(edited)
+  toast.success(t('settings.Saved'))
   def.value = edited
 }
 
@@ -64,6 +65,11 @@ function deleteServer() {
 const def = ref({})
 const edit = ref("")
 const editorOpen = ref(false)
+const serverJson = ref(null)
+
+function definitionTabChanged(newTab) {
+  if (newTab === 'json' && serverJson.value) serverJson.value.refresh()
+}
 
 onMounted(async () => {
   if (props.server.hasScope('server.definition.view'))
@@ -78,7 +84,7 @@ onMounted(async () => {
     <btn v-if="server.hasScope('server.delete')" color="error" @click="deleteServer()"><icon name="remove" />{{ t('servers.Delete') }}</btn>
 
     <overlay v-model="editorOpen" class="server-definition">
-      <tabs>
+      <tabs @tabChanged="definitionTabChanged">
         <tab id="variables" :title="t('templates.Variables')" icon="variables" hotkey="t v">
           <variables v-model="edit" />
         </tab>
@@ -96,7 +102,7 @@ onMounted(async () => {
           <server-environment v-model="edit" />
         </tab>
         <tab id="json" :title="t('templates.Json')" icon="json" hotkey="t j">
-          <ace id="server-json" v-model="edit" class="server-json-editor" mode="json" />
+          <ace id="server-json" ref="serverJson" v-model="edit" class="server-json-editor" mode="json" />
         </tab>
       </tabs>
       <div class="actions">

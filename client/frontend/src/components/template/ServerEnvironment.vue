@@ -12,10 +12,8 @@ const emit = defineEmits(['update:modelValue'])
 const { t } = useI18n()
 const template = ref(JSON.parse(props.modelValue))
 
-function updateEnv(env, updated) {
-  const e = template.value.supportedEnvironments.find(e => e.type === env)
-  Object.keys(e).map(f => delete e[f])
-  Object.keys(updated).map(f => e[f] = updated[f])
+function updateEnv(updated) {
+  Object.keys(updated).map(f => template.value.environment[f] = updated[f])
   emit('update:modelValue', JSON.stringify(template.value, undefined, 4))
 }
 
@@ -33,6 +31,6 @@ onUpdated(() => {
 
 <template>
   <div class="environment">
-    <environment-config :model-value="template.environment" :no-fields-message="t('env.NoEnvFields')" @update:modelValue="updateEnv(env, $event)" />
+    <environment-config :model-value="template.environment" :no-fields-message="t('env.NoEnvFields')" @update:modelValue="updateEnv" />
   </div>
 </template>
