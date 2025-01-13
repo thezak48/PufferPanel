@@ -3,7 +3,7 @@
   "Language": "اللغة",
   "Online": "متصل",
   "Offline": "غير متصل",
-  "Installing": "Installing",
+  "Installing": "جاري التثبيت",
   "Unknown": "غير معروف",
   "Loading": "جاري التحميل...",
   "Description": "الوصف",
@@ -14,9 +14,9 @@
   "Port": "المنفذ",
   "Collapse": "طي",
   "Expand": "توسيع",
-  "Copy": "Copy to clipboard",
-  "Copied": "Copied to clipboard",
-  "Back": "Back",
+  "Copy": "النسخ الى الحافظة",
+  "Copied": "تم النسخ إلى الحافظة",
+  "Back": "الرجوع",
   "Next": "التالي",
   "Details": "التفاصيل",
   "ErrorDetails": "تفاصيل الخطأ",
@@ -26,8 +26,8 @@
   "Apply": "تطبيق",
   "Confirm": "تأكيد",
   "Condition": "الشرط",
-  "Discard": "Discard",
-  "ConfirmLeave": "You have unsaved changes, do you want to discard these changes and leave this page?",
+  "Discard": "تجاهل",
+  "ConfirmLeave": "لديك تغييرات غير محفوظة، هل تريد تجاهل هذه التغييرات ومغادرة هذه الصفحة؟",
   "theme": {
     "Theme": "السمة",
     "Mode": "الوضع",
@@ -48,5 +48,7 @@
       "List": "قائمة"
     }
   },
-  "NoResults": "No Results"
+  "NoResults": "لا توجد نتائج.",
+  "Yes": "نعم",
+  "No": "لا"
 }

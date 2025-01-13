@@ -44,7 +44,7 @@
     "f l": "Focus first file/folder in the list",
     "f r": "Atualizar lista de ficheiros",
     "f u": "Carregar ficheiros",
-    "a e": "Editar definição do servidor",
+    "a e": "Editar a configuração do servidor",
     "a r": "Reload Server Definiton from disk"
   },
   "NodeList": {

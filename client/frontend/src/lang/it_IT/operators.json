@@ -9,8 +9,8 @@
     "formatted": "scrivere su file"
   },
   "resolveforgeversion": {
-    "generic": "Resolve Minecraft Forge Version",
-    "formatted": "Resolve Minecraft Forge Version"
+    "generic": "Risolvi La Versione Di Minecraft Forge",
+    "formatted": "Risolvi La Versione Di Minecraft Forge"
   },
   "download": {
     "generic": "Scarica file",
@@ -62,7 +62,7 @@
     "formatted": "Scarica Tessuto Minecraft"
   },
   "curseforge": {
-    "generic": "Download From CurseForge",
-    "formatted": "Download From CurseForge"
+    "generic": "Scarica Da CurseForge",
+    "formatted": "Scarica Da CurseForge"
   }
 }

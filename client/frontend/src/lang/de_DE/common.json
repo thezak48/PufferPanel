@@ -15,8 +15,8 @@
   "Collapse": "Einklappen",
   "Expand": "Erweitern",
   "Copy": "Kopieren",
-  "Copied": "Copied to clipboard",
-  "Back": "Back",
+  "Copied": "Kopiert",
+  "Back": "Zurück",
   "Next": "Weiter",
   "Details": "Details",
   "ErrorDetails": "Fehlerdetails",
@@ -48,5 +48,7 @@
       "List": "Liste"
     }
   },
-  "NoResults": "Keine Ergebnisse"
+  "NoResults": "Keine Ergebnisse",
+  "Yes": "Ja",
+  "No": "Nein"
 }

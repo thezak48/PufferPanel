@@ -65,10 +65,10 @@
       "Number": "Numero",
       "Options": "Opzioni"
     },
-    "EditGroup": "Edit group",
-    "RemoveGroup": "Remove group",
-    "MoveToGroup": "Move to different group",
-    "Remove": "Remove"
+    "EditGroup": "Modifica gruppo",
+    "RemoveGroup": "Rimuovi gruppo",
+    "MoveToGroup": "Sposta in un gruppo diverso",
+    "Remove": "Rimuovi"
   },
   "description": {
     "Name": "Questo nome è usato come identificatore per il modello",

@@ -46,7 +46,11 @@
     "server-console": "Может видеть консоль",
     "server-console-send": "Может отправлять команды в консоль",
     "server-stats": "Может видеть использование ресурсов",
-    "server-status": "Может видеть текущий статус сервера"
+    "server-status": "Может видеть текущий статус сервера",
+    "server-backup-view": "View and download backups",
+    "server-backup-create": "Create a new backup",
+    "server-backup-restore": "Restore server from a backup",
+    "server-backup-delete": "Delete a backup"
   },
   "hint": {
     "admin": "Даёт все разрешения",
@@ -66,7 +70,7 @@
   "ServersFilesPut": "Редактирования и загрузки файлов через менеджер файлов",
   "ServersEditUsers": "Редактирования доступа пользователей к этому серверу",
   "Admin": "Администратор (это право дает все доступные права)",
-  "ViewServers": "См. Серверы",
+  "ViewServers": "Просмотр серверов",
   "CreateServers": "Создание новых серверов",
   "DeleteServers": "Удаление серверов",
   "EditServerAdmin": "Редактирование настроек сервера",

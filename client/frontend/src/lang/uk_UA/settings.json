@@ -1,15 +1,15 @@
 {
   "Settings": "Налаштування",
   "PanelSettings": "Налаштування панелі",
-  "SavePanelSettings": "Save Panel Settings",
+  "SavePanelSettings": "Зберегти налаштування панелі",
   "EmailSettings": "Налаштування електронної пошти",
-  "SaveEmailSettings": "Save Email Settings",
+  "SaveEmailSettings": "Зберегти налаштування електронної пошти",
   "MasterUrl": "Головний URL",
   "MasterUrlHint": "Базова URL-адреса може бути досягнута панель у форматі http://localhost:8080",
   "CompanyName": "Назва компанії",
   "DefaultTheme": "Типова тема",
   "RegistrationEnabled": "Дозволити користувачам реєструватись самі по собі",
-  "RegistrationEnabledHint": "Self registered users can't do anything until given permissions\n\nDisabling this only prevents direct registration, invitation to a server and the Users page are not affected",
+  "RegistrationEnabledHint": "Самозареєстровані користувачі не можуть нічого робити, доки не отримають дозволи\n\nВимкнення цього блокує лише пряму реєстрацію, запрошення на сервер і сторінку користувачів не впливають",
   "EmailProvider": "Поштова служба",
   "emailProviders": {
     "none": "Нічого",
@@ -18,12 +18,12 @@
     "mailjet": "Mailjet"
   },
   "email": {
-    "from": "Sender Address",
-    "domain": "Domain",
+    "from": "Адреса відправника",
+    "domain": "Домен",
     "key": "API Key",
-    "host": "Host",
-    "username": "Username",
-    "password": "Password"
+    "host": "Вузол",
+    "username": "Ім'я користувача",
+    "password": "Пароль"
   },
-  "Saved": "Saved"
+  "Saved": "Збережено"
 }

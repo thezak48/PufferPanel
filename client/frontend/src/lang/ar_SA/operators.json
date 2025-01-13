@@ -1,29 +1,29 @@
 {
   "ConditionHint": "Only execute this step if this condition is met",
   "mojangdl": {
-    "generic": "Download Minecraft",
-    "formatted": "Download Minecraft"
+    "generic": "تحميل Minecraft",
+    "formatted": "تحميل Minecraft"
   },
   "writefile": {
     "generic": "Write to file",
     "formatted": "Write to file {target}"
   },
   "resolveforgeversion": {
-    "generic": "Resolve Minecraft Forge Version",
-    "formatted": "Resolve Minecraft Forge Version"
+    "generic": "حل إصدار Minecraft Forge",
+    "formatted": "حل إصدار Minecraft Forge"
   },
   "download": {
-    "generic": "Download file(s)",
+    "generic": "تحميل الملف(الملفات)",
     "formatted": "Download {file} | Download {n} files",
-    "files": "Files"
+    "files": "الملفات"
   },
   "command": {
-    "generic": "Run command(s)",
+    "generic": "تشغيل الأوامر",
     "formatted": "Run {command} | Run {n} commands",
-    "commands": "Commands"
+    "commands": "اﻷوامر"
   },
   "alterfile": {
-    "generic": "Modify a file",
+    "generic": "تعديل الملف",
     "formatted": "Modify file {target}",
     "regex": "Treat search string as regular expression",
     "search": "Search",

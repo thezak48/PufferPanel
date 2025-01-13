@@ -3,7 +3,7 @@
   "Language": "Lingua",
   "Online": "Online",
   "Offline": "Offline",
-  "Installing": "Installing",
+  "Installing": "Installando",
   "Unknown": "Sconosciuto",
   "Loading": "Caricamento...",
   "Description": "Descrizione",
@@ -14,9 +14,9 @@
   "Port": "Porta",
   "Collapse": "Collassa",
   "Expand": "Espandi",
-  "Copy": "Copy to clipboard",
-  "Copied": "Copied to clipboard",
-  "Back": "Back",
+  "Copy": "Copia negli appunti",
+  "Copied": "Copiato negli appunti",
+  "Back": "Indietro",
   "Next": "Successivo",
   "Details": "Dettagli",
   "ErrorDetails": "Dettagli Errore",
@@ -26,8 +26,8 @@
   "Apply": "Applica",
   "Confirm": "Conferma",
   "Condition": "Condizione",
-  "Discard": "Discard",
-  "ConfirmLeave": "You have unsaved changes, do you want to discard these changes and leave this page?",
+  "Discard": "Annulla",
+  "ConfirmLeave": "Hai delle modifiche non salvate, vuoi scartare queste modifiche e lasciare questa pagina?",
   "theme": {
     "Theme": "Tema",
     "Mode": "Modalità",
@@ -48,5 +48,7 @@
       "List": "Lista"
     }
   },
-  "NoResults": "No Results"
+  "NoResults": "Nessun risultato",
+  "Yes": "Si",
+  "No": "No"
 }
