@@ -67,5 +67,4 @@ type ServerFlags struct {
 
 type ServerBackupResponse struct {
 	BackupFileName string `json:"backupFileName"`
-	FileSize       int64  `json:"fileSize"`
 } //@name ServerBackup

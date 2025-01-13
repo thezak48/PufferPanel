@@ -822,7 +822,7 @@ func extract(c *gin.Context) {
 
 // @Summary Create backup
 // @Description Creates a full backup of the server
-// @Success 204 {object} nil
+// @Success 200 {object} pufferpanel.ServerBackupResponse
 // @Param id path string true "Server ID"
 // @Router /api/servers/{id}/backup/create [post]
 // @Security OAuth2Application[server.backup.create]
@@ -837,16 +837,12 @@ func createBackup(c *gin.Context) {
 		return
 	}
 
-	backupFileName, fileSize, err := server.CreateBackup()
+	id, err := server.StartBackup()
 
-	var pufferError *pufferpanel.Error
-	ispufferError := errors.As(err, &pufferError)
-	if ispufferError && pufferpanel.ErrBackupInProgress.Is(pufferError) {
-		response.HandleError(c, err, http.StatusBadRequest)
-	} else if response.HandleError(c, err, http.StatusInternalServerError) {
-	} else {
-		c.JSON(http.StatusOK, &pufferpanel.ServerBackupResponse{BackupFileName: backupFileName, FileSize: fileSize})
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
 	}
+	c.JSON(http.StatusOK, &pufferpanel.ServerBackupResponse{BackupFileName: id})
 }
 
 // @Summary Delete backup
@@ -861,20 +857,15 @@ func deleteBackup(c *gin.Context) {
 	fileName := c.Query("fileName")
 
 	err := server.DeleteBackup(fileName)
-
-	var pufferError *pufferpanel.Error
-	ispufferError := errors.As(err, &pufferError)
-	if ispufferError && pufferpanel.ErrBackupInProgress.Is(pufferError) {
-		response.HandleError(c, err, http.StatusBadRequest)
-	} else if response.HandleError(c, err, http.StatusInternalServerError) {
-	} else {
-		c.Status(http.StatusNoContent)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
 	}
+	c.Status(http.StatusNoContent)
 }
 
 // @Summary Restore backup
 // @Description Restore a full backup of the server
-// @Success 204 {object} nil
+// @Success 202 {object} nil
 // @Param id path string true "Server ID"
 // @Param fileName query string true "File Name"
 // @Router /api/servers/{id}/backup/restore [post]
@@ -890,15 +881,12 @@ func restoreBackup(c *gin.Context) {
 		return
 	}
 
-	err = server.RestoreBackup(fileName)
+	err = server.StartRestore(fileName)
 
-	pufferError, ispufferError := err.(*pufferpanel.Error)
-	if ispufferError && pufferpanel.ErrBackupInProgress.Is(pufferError) {
-		response.HandleError(c, err, http.StatusBadRequest)
-	} else if response.HandleError(c, err, http.StatusInternalServerError) {
-	} else {
-		c.Status(http.StatusNoContent)
+	if response.HandleError(c, err, http.StatusInternalServerError) {
+		return
 	}
+	c.Status(http.StatusAccepted)
 }
 
 // @Summary Download backup

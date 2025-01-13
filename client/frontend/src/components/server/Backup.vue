@@ -1,5 +1,5 @@
 <script setup>
-import { ref, inject, onMounted } from 'vue'
+import {ref, inject, onMounted, computed} from 'vue'
 import { useI18n } from 'vue-i18n'
 const events = inject('events')
 import Loader from '@/components/ui/Loader.vue'
@@ -18,6 +18,7 @@ const backups = ref(null)
 const backupName = ref("")
 const backupRunning = ref(false)
 const loading = ref(false)
+const sortedBackups = computed(() => backups.value.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
 
 onMounted(async () => {
   await loadBackups()
@@ -39,7 +40,7 @@ async function save() {
   try {
     backupRunning.value = true
     await props.server.createBackup(backupName.value)
-    toast.success(t('backup.Created'))
+    toast.success(t('backup.BackupStarted'))
     await loadBackups()
   }
   finally {
@@ -47,6 +48,7 @@ async function save() {
   }
 }
 
+/*
 const numFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 })
 function formatFileSize(size) {
   if (!size) return '0 B'
@@ -56,6 +58,7 @@ function formatFileSize(size) {
   if (size < Math.pow(2, 40)) return numFormat.format(size / Math.pow(2, 30)) + ' GiB'
   return numFormat.format(size / Math.pow(2, 40)) + ' TiB'
 }
+*/
 
 function promptRestore(file){
   events.emit(
@@ -81,7 +84,7 @@ async function restore(file) {
   try {
     loading.value = true
     await props.server.restoreBackup(file.id);
-    toast.success(t('backup.Restored'))
+    toast.success(t('backup.RestoreStarted'))
     await loadBackups()
   }
   finally {
@@ -148,11 +151,11 @@ const intl = new Intl.DateTimeFormat(
     <div class="backup-list">
       <loader v-if="isLoading()" />
       <!-- eslint-disable-next-line vue/no-template-shadow -->
-      <div v-for="backup in backups" v-else :key="backup.id" tabindex="0" class="backup">
+      <div v-for="backup in sortedBackups" v-else :key="backup.id" tabindex="0" class="backup">
         <icon class="file-icon" name="file" />
         <div class="details">
           <div class="name">{{ backup.name }} ({{ intl.format(new Date(backup.createdAt)) }})</div>
-          <div class="size">{{ formatFileSize(backup.fileSize) }}</div>
+          <!--<div class="size">{{ formatFileSize(backup.fileSize) }}</div> -->
         </div>
         <btn v-if="server.hasScope('server.backup.restore')" tabindex="-1" variant="icon" :tooltip="t('backup.Restore')" :disabled="isBackingUp()"
           @click.stop="promptRestore(backup)">

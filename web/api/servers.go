@@ -1076,7 +1076,7 @@ func createBackup(c *gin.Context) {
 		return
 	}
 
-	backup := &models.Backup{Name: name, FileName: responseData.BackupFileName, FileSize: responseData.FileSize, ServerID: server.Identifier}
+	backup := &models.Backup{Name: name, FileName: responseData.BackupFileName, ServerID: server.Identifier}
 	err = bs.Create(backup)
 	if response.HandleError(c, err, http.StatusBadRequest) {
 		return
