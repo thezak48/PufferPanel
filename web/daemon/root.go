@@ -55,7 +55,7 @@ func getFeatures(c *gin.Context) {
 		features = append(features, "docker")
 	}
 
-	c.JSON(http.StatusOK, Features{Features: features, Environments: envs, OS: runtime.GOOS, Arch: runtime.GOARCH})
+	c.JSON(http.StatusOK, Features{Features: features, Environments: envs, OS: runtime.GOOS, Arch: runtime.GOARCH, Version: pufferpanel.Version})
 }
 
 func testDocker() bool {
@@ -76,4 +76,5 @@ type Features struct {
 	Environments []string `json:"environments"`
 	OS           string   `json:"os"`
 	Arch         string   `json:"arch"`
+	Version      string   `json:"version"`
 } //@name Features
