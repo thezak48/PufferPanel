@@ -18,11 +18,13 @@ const expiresIn = int64(time.Hour / time.Second)
 
 // @Summary Authenticate
 // @Description Get a OAuth2 token to consume this API
-// @Param request body OAuth2TokenRequest true "OAuth2 token request"
+// @Param request formData OAuth2TokenRequest true "OAuth2 token request"
 // @Success 200 {object} oauth2.TokenResponse
 // @Failure 400 {object} oauth2.ErrorResponse
 // @Failure 401 {object} oauth2.ErrorResponse
 // @Failure 500 {object} oauth2.ErrorResponse
+// @Accept x-www-form-urlencoded
+// @Produce json
 // @Router /oauth2/token [post]
 func handleTokenRequest(c *gin.Context) {
 	var request OAuth2TokenRequest
