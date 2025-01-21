@@ -111,19 +111,22 @@ func (c CurseForge) Run(args pufferpanel.RunOperatorArgs) pufferpanel.OperationR
 		return pufferpanel.OperationResult{Error: err}
 	}
 
-	if clientFile.Id != 0 {
+	/*if clientFile.Id != 0 {
 		logging.Debug.Printf("Downloading modpack from %s\n", serverFile.DownloadUrl)
 		env.DisplayToConsole(true, "Downloading modpack from %s", serverFile.DownloadUrl)
 		err = downloadModpack(clientFile)
 		if err != nil {
 			return pufferpanel.OperationResult{Error: err}
 		}
-	}
+	}*/
 
 	serverZipPath := getCacheFilePath(serverFile)
 	logging.Debug.Printf("Extracting modpack from %s\n", serverZipPath)
 	env.DisplayToConsole(true, "Extracting modpack from %s", serverZipPath)
-	err = files.Extract(nil, serverZipPath, env.GetRootDirectory(), "*", true, nil)
+
+	singleRoot, _ := files.DetermineIfSingleRoot(serverZipPath)
+
+	err = files.Extract(nil, serverZipPath, env.GetRootDirectory(), "*", singleRoot, nil)
 	if err != nil {
 		return pufferpanel.OperationResult{Error: err}
 	}

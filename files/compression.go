@@ -28,11 +28,13 @@ func DetermineIfSingleRoot(sourceFile string) (bool, error) {
 
 	var rootName string
 
-	err := archiver.Walk(sourceFile, func(file archiver.File) (err error) {
+	var desired = errors.New("not single root")
+
+	err := archiver.Walk(sourceFile, func(file archiver.File) error {
 		name := getCompressedItemName(file)
 
 		if name == "" || name == PathSeparator {
-			return
+			return nil
 		}
 		root := strings.Split(name, PathSeparator)[0]
 		if rootName == "" {
@@ -40,12 +42,12 @@ func DetermineIfSingleRoot(sourceFile string) (bool, error) {
 			return nil
 		}
 		if root != rootName {
-			return archiver.ErrStopWalk
+			return desired
 		}
 		return nil
 	})
 
-	if errors.Is(err, archiver.ErrStopWalk) {
+	if err != nil {
 		isSingleRoot = false
 	}
 
