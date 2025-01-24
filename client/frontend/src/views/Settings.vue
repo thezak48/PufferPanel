@@ -96,7 +96,8 @@ async function saveEmailSettings() {
 onMounted(async () => {
   masterUrl.value = await api.settings.get('panel.settings.masterUrl')
   panelTitle.value = await api.settings.get('panel.settings.companyName')
-  registrationEnabled.value = (await api.settings.get('panel.registrationEnabled')) === "true"
+  const regEnabled = await api.settings.get('panel.registrationEnabled')
+  registrationEnabled.value = (regEnabled === "true" || regEnabled === true)
   theme.value = await api.settings.get('panel.settings.defaultTheme')
   emailProvider.value = await api.settings.get('panel.email.provider')
   Object.keys(email.value).map(async key => {
