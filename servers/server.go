@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"encoding/json"
 	"fmt"
-	uuid "github.com/gofrs/uuid/v5"
+	"github.com/gofrs/uuid/v5"
 	"github.com/mholt/archiver/v3"
 	"github.com/pufferpanel/pufferpanel/v3"
 	"github.com/pufferpanel/pufferpanel/v3/conditions"
@@ -549,13 +549,13 @@ func (p *Server) GetItem(name string) (*FileData, error) {
 	}
 
 	if info.IsDir() {
-		files, _ := p.GetFileServer().ReadDir(name)
+		fileList, _ := p.GetFileServer().ReadDir(name)
 		var fileNames []pufferpanel.FileDesc
 		offset := 0
 		if name == "" || name == "." || name == "/" {
-			fileNames = make([]pufferpanel.FileDesc, len(files))
+			fileNames = make([]pufferpanel.FileDesc, len(fileList))
 		} else {
-			fileNames = make([]pufferpanel.FileDesc, len(files)+1)
+			fileNames = make([]pufferpanel.FileDesc, len(fileList)+1)
 			fileNames[0] = pufferpanel.FileDesc{
 				Name: "..",
 				File: false,
@@ -565,7 +565,7 @@ func (p *Server) GetItem(name string) (*FileData, error) {
 
 		//validate any symlinks are valid
 
-		for i, file := range files {
+		for i, file := range fileList {
 			newFile := pufferpanel.FileDesc{
 				Name: file.Name(),
 				File: !file.IsDir(),
@@ -808,6 +808,10 @@ func (p *Server) RunCondition(condition string, extraData map[string]interface{}
 
 func (p *Server) GetFileServer() files.FileServer {
 	return p.fileServer
+}
+
+func (p *Server) SetFileServer(fs files.FileServer) {
+	p.fileServer = fs
 }
 
 func (p *Server) IsBackingUp() bool {

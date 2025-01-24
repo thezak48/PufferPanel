@@ -12,7 +12,7 @@ RUN go mod download && go mod verify
 
 COPY . .
 
-RUN go build -v -buildvcs=false -tags allowfsset -o /home/pufferpanel/curseforgetester github.com/pufferpanel/pufferpanel/v3/tools/curseforge
+RUN go build -v -buildvcs=false -o /home/pufferpanel/curseforgetester github.com/pufferpanel/pufferpanel/v3/tools/curseforge
 
 # Final image
 FROM eclipse-temurin:21-alpine
