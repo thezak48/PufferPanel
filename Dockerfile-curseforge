@@ -20,8 +20,8 @@ WORKDIR /home/pufferpanel
 ENV CURSEFORGE_KEY=""
 ENV PUFFER_DAEMON_DATA_CACHE="/cache"
 
-COPY --from=builder /home/pufferpanel/curseforgetester .
+COPY --from=builder /home/pufferpanel/curseforgetester /bin/
 
 
-ENTRYPOINT ["./curseforgetester"]
+ENTRYPOINT ["/bin/curseforgetester"]
 CMD []

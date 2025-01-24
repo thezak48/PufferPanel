@@ -12,6 +12,7 @@ import (
 	"github.com/pufferpanel/pufferpanel/v3/database"
 	"github.com/pufferpanel/pufferpanel/v3/models"
 	"github.com/pufferpanel/pufferpanel/v3/web"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -65,6 +66,8 @@ func TestMain(m *testing.M) {
 		//router.Use(gin.Logger())
 		gin.SetMode(gin.ReleaseMode)
 		web.RegisterRoutes(router)
+
+		models.LocalNode.PrivatePort = uint16(rand.Intn(50000) + 10000)
 
 		l, err := net.Listen("tcp", fmt.Sprintf("%s:%d", models.LocalNode.PrivateHost, models.LocalNode.PrivatePort))
 		if err != nil {

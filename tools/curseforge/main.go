@@ -54,6 +54,14 @@ var tests = []UnitTest{
 			FileId:    0,
 		},
 	},
+	{
+		CanFail: false,
+		Data: curseforge.CurseForge{
+			//MeatballCraft https://www.curseforge.com/minecraft/modpacks/meatballcraft/files/5842863
+			ProjectId: 411966,
+			FileId:    5842863,
+		},
+	},
 }
 
 func main() {
