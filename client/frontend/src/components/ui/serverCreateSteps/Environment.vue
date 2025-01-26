@@ -58,7 +58,7 @@ async function nodeChanged() {
       }
     })
 
-    availableEnvs.value = nodeFeatures.value.environments.map(env => {
+    availableEnvs.value = nodeFeatures.value.environments.sort().map(env => {
       return { value: env, label: t(`env.${env}.name`) }
     })
 
