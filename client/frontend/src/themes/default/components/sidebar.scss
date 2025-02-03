@@ -1,4 +1,7 @@
 .sidebar {
+  font-size: 1.25em;
+  font-weight: bold;
+
   a {
     color: var(--text);
   }
@@ -40,7 +43,7 @@
 
 @include breakpoint(lg) {
   .sidebar.mini {
-    width: 46px;
+    width: 52px;
     .list-item-content {
       transition: opacity 0.1s ease-in-out;
       opacity: 0;
